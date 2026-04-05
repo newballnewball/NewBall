@@ -16,7 +16,6 @@ async function ensureUserDoc(user, extra = {}) {
       email:user.email, venmoHandle:extra.venmo||"", wish:"",
       paid:{}, streak:0, isAdmin:user.email===ADMIN_EMAIL,
       joinedAt:serverTimestamp(), invitedBy:extra.invitedBy||null, likes:{},
-      // do NOT set seenHomescreen — absence means they'll see the prompt
     });
   }
 }
@@ -34,7 +33,7 @@ const inp = {
 };
 
 export default function AuthScreen({ invitedBy, onBack }) {
-  const [mode, setMode]       = useState("login"); // login | signup | reset
+  const [mode, setMode]       = useState("login");
   const [name, setName]       = useState("");
   const [email, setEmail]     = useState("");
   const [pass, setPass]       = useState("");
@@ -77,13 +76,6 @@ export default function AuthScreen({ invitedBy, onBack }) {
 
   return (
     <div style={{ minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#0a0a0f",position:"relative",overflow:"hidden",fontFamily:"'DM Sans',sans-serif" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lora:ital,wght@1,400&family=DM+Sans:wght@400;500;600;700&display=swap');
-        *{box-sizing:border-box;}
-        input::placeholder{color:rgba(255,255,255,0.25);}
-        @keyframes fade-up{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes glow{0%,100%{box-shadow:0 0 24px rgba(124,58,237,0.35)}50%{box-shadow:0 0 40px rgba(124,58,237,0.6)}}
-      `}</style>
       <div style={{ position:"fixed",top:-80,right:-80,width:300,height:300,borderRadius:"50%",background:"radial-gradient(circle,rgba(124,58,237,0.18),transparent 70%)",pointerEvents:"none" }}/>
       <div style={{ position:"fixed",bottom:-60,left:-60,width:240,height:240,borderRadius:"50%",background:"radial-gradient(circle,rgba(168,85,247,0.12),transparent 70%)",pointerEvents:"none" }}/>
 
@@ -94,7 +86,7 @@ export default function AuthScreen({ invitedBy, onBack }) {
           <div style={{ marginBottom:14 }}><Nooball size={68} spin="fast"/></div>
           <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:42,color:"#fff",letterSpacing:"0.06em",lineHeight:1 }}>NOO<span style={{ color:"#a78bfa" }}>BALL</span></div>
           <div style={{ fontFamily:"'Lora',serif",fontStyle:"italic",fontSize:13,color:"rgba(255,255,255,0.4)",marginTop:6 }}>everybody chips in · one person wins</div>
-          {invitedBy && <div style={{ marginTop:12,fontSize:13,color:"#a78bfa",background:"rgba(167,139,250,0.1)",border:"1px solid rgba(167,139,250,0.2)",borderRadius:20,padding:"6px 16px",display:"inline-block" }}>✨ You were invited to join</div>}
+          {invitedBy && <div style={{ marginTop:12,fontSize:13,color:"#a78bfa",background:"rgba(167,139,250,0.1)",border:"1px solid rgba(167,139,250,0.2)",borderRadius:20,padding:"6px 16px",display:"inline-block" }}>You were invited to join</div>}
         </div>
 
         {mode !== "reset" && (

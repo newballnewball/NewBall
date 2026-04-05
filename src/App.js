@@ -30,22 +30,14 @@ export default function App() {
 
 // ── The NooBall — clean, trustworthy, satisfying spin ─────────────────────────
 export function Nooball({ size = 36, spin = "slow" }) {
+  const animName = spin==="fast"?"nb-spin-fast":spin==="medium"?"nb-spin-medium":"nb-spin-slow";
   const dur = spin==="fast"?"1.4s":spin==="medium"?"2.4s":"4s";
   return (
     <span style={{
       display:"inline-block", width:size, height:size,
       verticalAlign:"middle", flexShrink:0,
-      animation:`nb-spin ${dur} linear infinite`,
+      animation:`${animName} ${dur} linear infinite`,
     }}>
-      <style>{`
-        @keyframes nb-spin {
-          0%   { transform: rotate(0deg) translateY(0px); }
-          25%  { transform: rotate(90deg) translateY(-${Math.round(size*.1)}px); }
-          50%  { transform: rotate(180deg) translateY(0px); }
-          75%  { transform: rotate(270deg) translateY(-${Math.round(size*.1)}px); }
-          100% { transform: rotate(360deg) translateY(0px); }
-        }
-      `}</style>
       <svg width={size} height={size} viewBox="0 0 100 100">
         <defs>
           <radialGradient id="nb-grad" cx="40%" cy="35%" r="60%">
@@ -58,13 +50,9 @@ export function Nooball({ size = 36, spin = "slow" }) {
             <stop offset="100%" stopColor="rgba(255,255,255,0)"/>
           </radialGradient>
         </defs>
-        {/* Base ball */}
         <circle cx="50" cy="50" r="46" fill="url(#nb-grad)" stroke="#166534" strokeWidth="1"/>
-        {/* Shine */}
         <circle cx="50" cy="50" r="46" fill="url(#nb-shine)"/>
-        {/* Dollar sign — clean and centered */}
         <text x="50" y="62" textAnchor="middle" fontFamily="Georgia,serif" fontSize="40" fontWeight="700" fill="#bbf7d0" opacity="0.9">$</text>
-        {/* Seams — subtle */}
         <path d="M27,18 C35,30 37,42 35,52 C33,62 27,73 21,81" fill="none" stroke="#15803d" strokeWidth="2.5" strokeLinecap="round" opacity="0.6"/>
         <path d="M73,18 C65,30 63,42 65,52 C67,62 73,73 79,81" fill="none" stroke="#15803d" strokeWidth="2.5" strokeLinecap="round" opacity="0.6"/>
         <path d="M29,22 L25,27 M30,31 L26,36 M31,40 L27,45 M31,49 L27,54 M31,58 L27,63 M30,67 L26,72" fill="none" stroke="#15803d" strokeWidth="1.5" strokeLinecap="round" opacity="0.4"/>
@@ -111,7 +99,6 @@ export function Confetti({ active }) {
     const t = setTimeout(()=>setPieces([]),5500); return()=>clearTimeout(t);
   },[active]);
   return <>
-    <style>{`@keyframes nb-fall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}`}</style>
     {pieces.map(p=>(
       <div key={p.id} style={{ position:"fixed",top:0,left:`${p.x}%`,width:p.size,height:p.circle?p.size:p.size*.4,background:p.color,borderRadius:p.circle?"50%":"2px",animation:`nb-fall ${p.dur}s ease-in forwards`,animationDelay:`${p.delay}s`,zIndex:9999,pointerEvents:"none",transform:`rotate(${p.rot}deg)` }}/>
     ))}

@@ -3,23 +3,8 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { db, getTiers, SAMPLE_WISHES } from "../firebase";
 import { Nooball, useCountdown, pad } from "../App";
 
-const BASE_PLAYERS = 11203;
-const TIER_BASE = { daily:8400, weekly:5900, monthly:3800, yearly:940 };
-
-function useTicker(base, ms=4200, inc=0.25) {
-  const [val, setVal] = useState(base);
-  useEffect(() => {
-    const id = setInterval(()=>setVal(v=>parseFloat((v+inc).toFixed(2))), ms);
-    return ()=>clearInterval(id);
-  },[base, ms, inc]);
-  return val;
-}
-
-function TierRow({ tier, memberCount }) {
-  const cd       = useCountdown(tier.next);
-  const basePot  = (TIER_BASE[tier.id] + memberCount) * tier.amount;
-  const pot      = useTicker(basePot, 3800+Math.random()*2000, tier.amount);
-  const potStr   = pot >= 1000 ? `$${(pot/1000).toFixed(1)}k` : `$${pot.toFixed(2)}`;
+function TierRow({ tier }) {
+  const cd = useCountdown(tier.next);
 
   return (
     <div style={{ padding:"14px 0", borderBottom:"1px solid rgba(255,255,255,0.05)" }}>
@@ -27,10 +12,6 @@ function TierRow({ tier, memberCount }) {
         <div>
           <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:4 }}>
             <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:13, color:"rgba(255,255,255,0.4)", letterSpacing:"0.14em" }}>{tier.label.toUpperCase()}</span>
-            <div style={{ display:"flex", alignItems:"baseline", gap:4 }}>
-              <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:26, color:tier.color, letterSpacing:"0.04em", lineHeight:1 }}>{potStr}</span>
-              <span style={{ fontSize:11, color:"rgba(255,255,255,0.3)", fontFamily:"'DM Sans',sans-serif" }}>in the cup</span>
-            </div>
           </div>
           <div style={{ display:"flex", gap:10, alignItems:"center" }}>
             {[["d","d"],["h","h"],["m","m"],["s","s"]].map(([k,l])=>(
@@ -54,7 +35,6 @@ function TierRow({ tier, memberCount }) {
 
 export default function LandingScreen({ onJoin }) {
   const [memberCount, setMemberCount] = useState(0);
-  const totalDisplay = useTicker(BASE_PLAYERS + memberCount, 7000, 1);
   const tiers = getTiers();
   const [shownWishes] = useState(()=>[...SAMPLE_WISHES].sort(()=>Math.random()-.5).slice(0,3));
 
@@ -62,13 +42,6 @@ export default function LandingScreen({ onJoin }) {
 
   return (
     <div style={{ fontFamily:"'DM Sans',sans-serif", background:"#0a0a0f", minHeight:"100vh", maxWidth:430, margin:"0 auto", color:"#fff" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lora:ital,wght@0,400;1,400&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
-        *{box-sizing:border-box;margin:0;padding:0;}
-        @keyframes fade-up{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes btn-pulse{0%,100%{box-shadow:0 0 0 0 rgba(124,58,237,0.5)}70%{box-shadow:0 0 0 14px rgba(124,58,237,0)}}
-        .join-btn{transition:transform 0.15s;} .join-btn:hover{transform:translateY(-2px) scale(1.02);} .join-btn:active{transform:scale(0.97);}
-      `}</style>
 
       {/* Hero */}
       <div style={{ background:"linear-gradient(170deg,#110828 0%,#0a0a0f 100%)", padding:"52px 24px 36px", textAlign:"center", position:"relative", overflow:"hidden" }}>
@@ -84,13 +57,15 @@ export default function LandingScreen({ onJoin }) {
           $1 in the cup.<br/>One person catches it.
         </div>
 
-        {/* Live player count */}
-        <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(167,139,250,0.08)", border:"1px solid rgba(167,139,250,0.18)", borderRadius:24, padding:"8px 18px", marginBottom:28, animation:"fade-up 0.4s ease 0.2s both" }}>
-          <span style={{ width:6,height:6,borderRadius:"50%",background:"#a78bfa",boxShadow:"0 0 6px #a78bfa",animation:"btn-pulse 2s ease infinite",display:"inline-block" }}/>
-          <span style={{ fontSize:13, color:"rgba(255,255,255,0.65)" }}>
-            <strong style={{ color:"#fff", fontFamily:"'Bebas Neue',sans-serif", fontSize:15, letterSpacing:"0.04em" }}>{Math.floor(totalDisplay).toLocaleString()}</strong> people already in
-          </span>
-        </div>
+        {/* Real member count */}
+        {memberCount > 0 && (
+          <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(167,139,250,0.08)", border:"1px solid rgba(167,139,250,0.18)", borderRadius:24, padding:"8px 18px", marginBottom:28, animation:"fade-up 0.4s ease 0.2s both" }}>
+            <span style={{ width:6,height:6,borderRadius:"50%",background:"#a78bfa",boxShadow:"0 0 6px #a78bfa",animation:"btn-pulse 2s ease infinite",display:"inline-block" }}/>
+            <span style={{ fontSize:13, color:"rgba(255,255,255,0.65)" }}>
+              <strong style={{ color:"#fff", fontFamily:"'Bebas Neue',sans-serif", fontSize:15, letterSpacing:"0.04em" }}>{memberCount.toLocaleString()}</strong> {memberCount === 1 ? "person" : "people"} already in
+            </span>
+          </div>
+        )}
 
         <div style={{ animation:"fade-up 0.4s ease 0.25s both" }}>
           <button className="join-btn" onClick={onJoin} style={{ background:"linear-gradient(135deg,#7c3aed,#a855f7)", border:"none", borderRadius:14, color:"#fff", fontSize:20, padding:"17px 56px", cursor:"pointer", fontFamily:"'Bebas Neue',sans-serif", letterSpacing:"0.1em", animation:"btn-pulse 2.5s ease infinite" }}>
@@ -106,9 +81,9 @@ export default function LandingScreen({ onJoin }) {
       <div style={{ padding:"22px 20px 8px" }}>
         <div style={{ display:"flex", alignItems:"center", gap:7, marginBottom:8 }}>
           <span style={{ width:5,height:5,borderRadius:"50%",background:"#a78bfa",boxShadow:"0 0 4px #a78bfa",display:"inline-block" }}/>
-          <span style={{ fontSize:10, color:"rgba(255,255,255,0.3)", textTransform:"uppercase", letterSpacing:"0.15em", fontFamily:"'DM Sans',sans-serif" }}>Live drawings</span>
+          <span style={{ fontSize:10, color:"rgba(255,255,255,0.3)", textTransform:"uppercase", letterSpacing:"0.15em", fontFamily:"'DM Sans',sans-serif" }}>Next drawings</span>
         </div>
-        {tiers.map(t=><TierRow key={t.id} tier={t} memberCount={memberCount}/>)}
+        {tiers.map(t=><TierRow key={t.id} tier={t}/>)}
       </div>
 
       {/* Divider */}
@@ -131,7 +106,7 @@ export default function LandingScreen({ onJoin }) {
           ))}
         </div>
         <button className="join-btn" onClick={onJoin} style={{ width:"100%", padding:14, background:"transparent", border:"1px solid rgba(167,139,250,0.22)", borderRadius:12, color:"rgba(167,139,250,0.65)", fontSize:14, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontWeight:600 }}>
-          Add your wish →
+          Add your wish
         </button>
       </div>
     </div>
