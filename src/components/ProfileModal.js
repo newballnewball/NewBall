@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { deleteUser, reauthenticateWithCredential, EmailAuthProvider, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { deleteUser, reauthenticateWithCredential, EmailAuthProvider, GoogleAuthProvider, signInWithPopup, getAuth, signOut } from "firebase/auth";
 import { doc, updateDoc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../firebase";
 
@@ -106,10 +106,15 @@ export default function ProfileModal({ user, myData, members, onClose }) {
         </div>
 
         {/* Streak */}
-        <div style={{ background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"12px 16px",marginBottom:22,display:"flex",justifyContent:"space-between",alignItems:"center" }}>
-          <div style={{ fontSize:13,color:"rgba(255,255,255,0.5)" }}>Your streak</div>
-          <div style={{ fontSize:16,fontWeight:700,color:"#fb923c" }}>🔥 {myData?.streak||0} months</div>
+        <div style={{ background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"12px 16px",marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center" }}>
+          <div style={{ fontSize:13,color:"rgba(255,255,255,0.5)" }}>Times you've played</div>
+          <div style={{ fontSize:16,fontWeight:700,color:"#fb923c" }}>🔥 {myData?.streak||0}</div>
         </div>
+
+        {/* Sign out */}
+        <button onClick={()=>signOut(getAuth())} style={{ width:"100%",padding:"12px",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,color:"rgba(255,255,255,0.45)",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit",marginBottom:22 }}>
+          Sign out
+        </button>
 
         {/* Delete account */}
         <div style={{ borderTop:"1px solid rgba(255,255,255,0.07)",paddingTop:20 }}>
