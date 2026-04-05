@@ -332,7 +332,7 @@ export default function MainApp({ user }) {
 
             {[
               { n:"01", t:"You throw in a buck", b:"Pick a drawing — daily for a quarter, weekly for a dollar, monthly for two, yearly for ten. Chip in. You're in the pool." },
-              { n:"02", t:"The pot grows", b:"Every person who joins adds to it. More people means more money in the cup — your odds don't change, but the prize does." },
+              { n:"02", t:"The pot grows", b:"Every person who joins adds to the pot. More people means a bigger prize — but also more competition. Worth it." },
               { n:"03", t:"Someone catches the NooBall", b:"When time's up, one person gets randomly selected and walks away with everything in the pool. That person could be you." },
               { n:"04", t:"It's the honor system", b:"We don't take a cut. There are no fees. The winner posts their Venmo, everyone sends. Simple as that. Don't be the person who doesn't send." },
             ].map(s=>(
