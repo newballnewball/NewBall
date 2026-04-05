@@ -17,31 +17,45 @@ export const db   = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 export const ADMIN_EMAIL = "emaildavedavis@gmail.com";
 
-// Always fresh — called at render time, never stale
-export function getNextDaily() {
+// Next midnight tonight
+function nextMidnight() {
   const d = new Date();
-  d.setDate(d.getDate() + 1); d.setHours(20,0,0,0); return d.toISOString();
-}
-export function getNextWeekly() {
-  const d = new Date();
-  const days = (7 - d.getDay()) % 7 || 7;
-  d.setDate(d.getDate() + days); d.setHours(20,0,0,0); return d.toISOString();
-}
-export function getNextMonthly() {
-  const d = new Date();
-  d.setMonth(d.getMonth()+1, 1); d.setHours(20,0,0,0); return d.toISOString();
-}
-export function getNextYearly() {
-  const d = new Date();
-  d.setFullYear(d.getFullYear()+1, 0, 1); d.setHours(20,0,0,0); return d.toISOString();
+  d.setHours(24, 0, 0, 0); // rolls to next day at 00:00:00
+  return d.toISOString();
 }
 
+// Next Sunday midnight
+function nextSundayMidnight() {
+  const d = new Date();
+  const daysUntil = (7 - d.getDay()) % 7 || 7;
+  d.setDate(d.getDate() + daysUntil);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
+// First day of next month midnight
+function nextMonthMidnight() {
+  const d = new Date();
+  d.setMonth(d.getMonth() + 1, 1);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
+// Jan 1 next year midnight
+function nextYearMidnight() {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() + 1, 0, 1);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
+// Always fresh — called at render time
 export function getTiers() {
   return [
-    { id:"daily",   label:"Daily",   amount:0.25, color:"#e8d5a3", next:getNextDaily()   },
-    { id:"weekly",  label:"Weekly",  amount:1.00, color:"#c9b472", next:getNextWeekly()  },
-    { id:"monthly", label:"Monthly", amount:2.00, color:"#e05c2a", next:getNextMonthly() },
-    { id:"yearly",  label:"Yearly",  amount:10.00,color:"#f5f0e8", next:getNextYearly()  },
+    { id:"daily",   label:"Daily",   amount:0.25, color:"#a78bfa", next:nextMidnight()       },
+    { id:"weekly",  label:"Weekly",  amount:1.00, color:"#c084fc", next:nextSundayMidnight()  },
+    { id:"monthly", label:"Monthly", amount:2.00, color:"#f472b6", next:nextMonthMidnight()   },
+    { id:"yearly",  label:"Yearly",  amount:10.00,color:"#fb923c", next:nextYearMidnight()    },
   ];
 }
 
@@ -67,4 +81,6 @@ export const SAMPLE_WISHES = [
   { name:"Tyler H.",  wish:"Date night — dinner and a movie, no budget stress 🎬" },
   { name:"Layla R.",  wish:"Taco Tuesday for the whole office — my treat 🌮" },
   { name:"Priya K.",  wish:"Start my balcony herb garden 🌱" },
+  { name:"Devon S.",  wish:"A stack of books I've had on my list forever 📚" },
+  { name:"Nadia B.",  wish:"A fancy pour-over coffee setup ☕" },
 ];

@@ -1,92 +1,75 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { HONOR_LINES } from "../firebase";
-import { Baseball, Confetti } from "../App";
+import { Nooball, Confetti } from "../App";
 
-export default function WinnerModal({ winner, pot, tier, onClose, currentUserId, onMarkPaid }) {
-  const [honorLine] = useState(HONOR_LINES[Math.floor(Math.random() * HONOR_LINES.length)]);
+export default function WinnerModal({ winner, pot, tier, onClose, currentUserId }) {
+  const [honorLine] = useState(HONOR_LINES[Math.floor(Math.random()*HONOR_LINES.length)]);
   const [paid, setPaid] = useState(false);
   const isWinner = winner?.uid === currentUserId;
 
-  const handlePaid = () => {
-    setPaid(true);
-    onMarkPaid && onMarkPaid();
-  };
-
   return (
-    <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:24,backdropFilter:"blur(8px)" }}>
+    <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:24,backdropFilter:"blur(10px)" }}>
       <style>{`
-        @keyframes winner-pop { 0%{transform:scale(0.5) rotate(-10deg);opacity:0} 60%{transform:scale(1.08) rotate(2deg)} 100%{transform:scale(1) rotate(0deg);opacity:1} }
-        @keyframes slide-up { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes shimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;600;700&display=swap');
+        @keyframes winner-pop{0%{transform:scale(0.4) rotate(-8deg);opacity:0}60%{transform:scale(1.06) rotate(1deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+        @keyframes slide-up{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes winner-glow{0%,100%{box-shadow:0 0 30px rgba(167,139,250,0.4)}50%{box-shadow:0 0 60px rgba(167,139,250,0.8)}}
       `}</style>
 
-      <Confetti active={true} />
+      <Confetti active={true}/>
 
-      <div style={{ background:"#0e0e14",border:"1px solid rgba(192,132,252,0.3)",borderRadius:24,padding:"32px 24px",maxWidth:380,width:"100%",textAlign:"center",position:"relative",overflow:"hidden" }}>
-        {/* Glow */}
-        <div style={{ position:"absolute",top:-40,left:"50%",transform:"translateX(-50%)",width:200,height:200,borderRadius:"50%",background:"radial-gradient(circle,rgba(192,132,252,0.25),transparent 70%)",pointerEvents:"none" }}/>
+      <div style={{ background:"#0d0d14",border:"1px solid rgba(167,139,250,0.3)",borderRadius:24,padding:"32px 24px",maxWidth:380,width:"100%",textAlign:"center",position:"relative",overflow:"hidden",animation:"winner-glow 2s ease infinite",fontFamily:"'DM Sans',sans-serif" }}>
+        <div style={{ position:"absolute",top:-50,left:"50%",transform:"translateX(-50%)",width:220,height:220,borderRadius:"50%",background:"radial-gradient(circle,rgba(167,139,250,0.2),transparent 70%)",pointerEvents:"none" }}/>
 
-        {/* Ball */}
-        <div style={{ marginBottom:16, animation:"winner-pop 0.6s cubic-bezier(0.34,1.56,0.64,1) both" }}>
-          <Baseball size={72} spin="fast" />
+        <div style={{ marginBottom:16,animation:"winner-pop 0.6s cubic-bezier(0.34,1.56,0.64,1)" }}>
+          <Nooball size={76} spin="fast"/>
         </div>
 
-        {/* Title */}
-        <div style={{ fontSize:13,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:6,animation:"slide-up 0.4s ease 0.3s both" }}>
-          {tier?.label || "Monthly"} winner
+        <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:13,color:"rgba(255,255,255,0.4)",letterSpacing:"0.18em",marginBottom:6,animation:"slide-up 0.4s ease 0.3s both" }}>
+          {tier?.label?.toUpperCase() || "MONTHLY"} WINNER
         </div>
 
-        <div style={{ fontFamily:"'Fraunces',serif",fontSize:32,fontWeight:700,color:"#fff",lineHeight:1.1,marginBottom:8,animation:"slide-up 0.4s ease 0.4s both" }}>
-          {winner?.name}
-        </div>
+        {isWinner ? (
+          <>
+            <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:42,color:"#a78bfa",letterSpacing:"0.04em",lineHeight:1,marginBottom:6,animation:"slide-up 0.4s ease 0.4s both" }}>
+              THAT'S YOU! 🎉
+            </div>
+            <div style={{ fontFamily:"'Lora',serif",fontStyle:"italic",fontSize:16,color:"rgba(255,255,255,0.6)",marginBottom:16,lineHeight:1.5,animation:"slide-up 0.4s ease 0.45s both" }}>
+              You caught the NooBall.<br/>Check your Venmo soon.
+            </div>
+          </>
+        ) : (
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:36,color:"#fff",letterSpacing:"0.03em",lineHeight:1.1,marginBottom:6,animation:"slide-up 0.4s ease 0.4s both" }}>
+            {winner?.name}
+          </div>
+        )}
 
-        <div style={{ fontFamily:"'Fraunces',serif",fontSize:48,fontWeight:700,background:"linear-gradient(135deg,#c084fc,#f472b6)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",marginBottom:20,animation:"slide-up 0.4s ease 0.5s both" }}>
+        <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:54,background:"linear-gradient(135deg,#a78bfa,#f472b6)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",letterSpacing:"0.04em",marginBottom:20,animation:"slide-up 0.4s ease 0.5s both" }}>
           ${pot}
         </div>
 
-        {/* Wish */}
         {winner?.wish && (
-          <div style={{ background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"14px 16px",marginBottom:20,animation:"slide-up 0.4s ease 0.6s both" }}>
-            <div style={{ fontSize:11,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6 }}>They're going to</div>
-            <div style={{ fontSize:15,color:"rgba(255,255,255,0.85)",fontFamily:"'Fraunces',serif",fontStyle:"italic",lineHeight:1.5 }}>"{winner.wish}"</div>
+          <div style={{ background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"14px 16px",marginBottom:18,animation:"slide-up 0.4s ease 0.55s both" }}>
+            <div style={{ fontSize:11,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:5,fontFamily:"'DM Sans',sans-serif" }}>They're going to</div>
+            <div style={{ fontFamily:"'Lora',serif",fontStyle:"italic",fontSize:15,color:"rgba(255,255,255,0.85)",lineHeight:1.5 }}>"{winner.wish}"</div>
           </div>
         )}
 
-        {/* Venmo + honor system */}
-        <div style={{ background:"rgba(168,85,247,0.08)",border:"1px solid rgba(168,85,247,0.2)",borderRadius:12,padding:"14px 16px",marginBottom:20,animation:"slide-up 0.4s ease 0.7s both" }}>
-          {winner?.venmoHandle ? (
-            <>
-              <div style={{ fontSize:13,color:"rgba(255,255,255,0.5)",marginBottom:4 }}>Send ${tier?.amount || "2"} to</div>
-              <div style={{ fontSize:18,fontWeight:700,color:"#c084fc",marginBottom:8 }}>@{winner.venmoHandle}</div>
-            </>
-          ) : (
-            <div style={{ fontSize:13,color:"rgba(255,255,255,0.5)",marginBottom:8 }}>Winner will share their Venmo shortly.</div>
-          )}
-          <div style={{ fontSize:12,color:"rgba(255,255,255,0.35)",fontStyle:"italic",lineHeight:1.5 }}>{honorLine}</div>
+        <div style={{ background:"rgba(167,139,250,0.07)",border:"1px solid rgba(167,139,250,0.18)",borderRadius:12,padding:"14px 16px",marginBottom:18,animation:"slide-up 0.4s ease 0.6s both" }}>
+          {winner?.venmoHandle
+            ?<><div style={{ fontSize:13,color:"rgba(255,255,255,0.45)",marginBottom:4 }}>Send ${tier?.amount || "2"} to</div>
+               <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:22,color:"#a78bfa",letterSpacing:"0.05em",marginBottom:8 }}>@{winner.venmoHandle}</div></>
+            :<div style={{ fontSize:13,color:"rgba(255,255,255,0.45)",marginBottom:10 }}>Winner will share their Venmo shortly.</div>}
+          <div style={{ fontFamily:"'Lora',serif",fontStyle:"italic",fontSize:12,color:"rgba(255,255,255,0.35)",lineHeight:1.5 }}>{honorLine}</div>
         </div>
 
-        {/* Mark paid */}
         {!isWinner && (
-          <button onClick={handlePaid} style={{
-            width:"100%",padding:"15px",borderRadius:12,border:"none",cursor:paid?"default":"pointer",fontFamily:"inherit",fontSize:15,fontWeight:700,
-            background: paid ? "rgba(52,211,153,0.15)" : "linear-gradient(135deg,#7c3aed,#ec4899)",
-            color: paid ? "#34d399" : "#fff",
-            border: paid ? "1px solid #34d399" : "none",
-            transition:"all 0.2s",
-            transform: paid ? "scale(1)" : "scale(1)",
-            animation:"slide-up 0.4s ease 0.8s both",
-          }}>
-            {paid ? "✓ Marked as paid — good human 🤙" : `I sent $${tier?.amount || "2"} ✓`}
+          <button onClick={()=>setPaid(true)} disabled={paid} style={{ width:"100%",padding:14,borderRadius:12,border:"none",cursor:paid?"default":"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:15,fontWeight:700,background:paid?"rgba(52,211,153,0.15)":"linear-gradient(135deg,#7c3aed,#a855f7)",color:paid?"#34d399":"#fff",border:paid?"1px solid #34d399":"none",transition:"all 0.2s",animation:"slide-up 0.4s ease 0.7s both" }}>
+            {paid ? "✓ Sent — good human 🤙" : `I sent $${tier?.amount} ✓`}
           </button>
         )}
 
-        {isWinner && (
-          <div style={{ fontSize:15,fontWeight:700,color:"#34d399",padding:12,animation:"slide-up 0.4s ease 0.8s both" }}>
-            🎉 That's you! Check your Venmo soon.
-          </div>
-        )}
-
-        <button onClick={onClose} style={{ marginTop:12,background:"transparent",border:"none",color:"rgba(255,255,255,0.25)",cursor:"pointer",fontSize:13,fontFamily:"inherit" }}>
+        <button onClick={onClose} style={{ marginTop:12,background:"transparent",border:"none",color:"rgba(255,255,255,0.22)",cursor:"pointer",fontSize:13,fontFamily:"inherit" }}>
           Close
         </button>
       </div>
