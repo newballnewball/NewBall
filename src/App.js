@@ -1,44 +1,45 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
+import LandingScreen from "./components/LandingScreen";
 import AuthScreen from "./components/AuthScreen";
 import MainApp from "./components/MainApp";
 
 export default function App() {
-  const [user, setUser] = useState(undefined);
+  const [user, setUser]           = useState(undefined);
+  const [showAuth, setShowAuth]   = useState(false);
   const [invitedBy, setInvitedBy] = useState(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const ref = params.get("ref");
-    if (ref) setInvitedBy(ref);
+    if (ref) { setInvitedBy(ref); setShowAuth(true); }
     return onAuthStateChanged(auth, u => setUser(u || null));
   }, []);
 
   if (user === undefined) {
     return (
-      <div style={{ background: "#0a0a0f", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ background:"#0a0a0f", minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center" }}>
         <Baseball size={56} spin="fast" />
       </div>
     );
   }
 
-  if (!user) return <AuthScreen invitedBy={invitedBy} />;
-  return <MainApp user={user} />;
+  if (user) return <MainApp user={user} />;
+  if (showAuth) return <AuthScreen invitedBy={invitedBy} onBack={() => setShowAuth(false)} />;
+  return <LandingScreen onJoin={() => setShowAuth(true)} />;
 }
 
 export function Baseball({ size = 36, spin = "slow" }) {
+  const duration = spin === "fast" ? "1.2s" : spin === "medium" ? "2s" : "3s";
   return (
-    <span style={{
-      display: "inline-block", width: size, height: size, verticalAlign: "middle", flexShrink: 0,
-      animation: spin === "fast" ? "fly 1.2s linear infinite" : "fly 3s linear infinite",
-    }}>
+    <span style={{ display:"inline-block", width:size, height:size, verticalAlign:"middle", flexShrink:0, animation:`nooball-fly ${duration} linear infinite` }}>
       <style>{`
-        @keyframes fly {
+        @keyframes nooball-fly {
           0%   { transform: rotate(0deg) translateY(0px); }
-          25%  { transform: rotate(90deg) translateY(-6px); }
+          25%  { transform: rotate(90deg) translateY(-${size*0.15}px); }
           50%  { transform: rotate(180deg) translateY(0px); }
-          75%  { transform: rotate(270deg) translateY(-6px); }
+          75%  { transform: rotate(270deg) translateY(-${size*0.15}px); }
           100% { transform: rotate(360deg) translateY(0px); }
         }
       `}</style>
@@ -51,4 +52,43 @@ export function Baseball({ size = 36, spin = "slow" }) {
       </svg>
     </span>
   );
+}
+
+export function useCountdown(target) {
+  const [t, setT] = useState({ d:0,h:0,m:0,s:0 });
+  useEffect(() => {
+    const tick = () => {
+      const diff = new Date(target) - Date.now();
+      if (diff <= 0) return setT({ d:0,h:0,m:0,s:0 });
+      setT({ d:Math.floor(diff/86400000), h:Math.floor(diff%86400000/3600000), m:Math.floor(diff%3600000/60000), s:Math.floor(diff%60000/1000) });
+    };
+    tick(); const id = setInterval(tick,1000); return () => clearInterval(id);
+  }, [target]);
+  return t;
+}
+
+export function pad(n) { return String(n).padStart(2,"0"); }
+export function hsl(i) { return `hsl(${(i*47+260)%360},55%,60%)`; }
+export function ini(n) { return (n||"?").slice(0,2).toUpperCase(); }
+
+export function Confetti({ active }) {
+  const [pieces, setPieces] = useState([]);
+  useEffect(() => {
+    if (!active) return;
+    const cols = ["#c084fc","#f472b6","#fb923c","#facc15","#34d399","#60a5fa","#f5f0e8"];
+    setPieces(Array.from({length:70},(_,i) => ({
+      id:i, x:Math.random()*100, delay:Math.random()*1.2,
+      size:5+Math.random()*10, rot:Math.random()*360,
+      color:cols[i%cols.length], circle:Math.random()>0.4,
+      duration: 2.5+Math.random()*1.5,
+    })));
+    const t = setTimeout(() => setPieces([]), 5000);
+    return () => clearTimeout(t);
+  }, [active]);
+  return <>
+    <style>{`@keyframes confetti-fall { 0%{transform:translateY(-20px) rotate(0deg);opacity:1} 100%{transform:translateY(110vh) rotate(720deg);opacity:0} }`}</style>
+    {pieces.map(p => (
+      <div key={p.id} style={{ position:"fixed",top:0,left:`${p.x}%`,width:p.size,height:p.circle?p.size:p.size*0.4,background:p.color,borderRadius:p.circle?"50%":"2px",animation:`confetti-fall ${p.duration}s ease-in forwards`,animationDelay:`${p.delay}s`,zIndex:9999,pointerEvents:"none",transform:`rotate(${p.rot}deg)` }}/>
+    ))}
+  </>;
 }
