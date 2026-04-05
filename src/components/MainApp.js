@@ -7,6 +7,7 @@ import WinnerModal      from "./WinnerModal";
 import PinkySwearModal  from "./PinkySwearModal";
 import WishInput        from "./WishInput";
 import HomescreenPrompt from "./HomescreenPrompt";
+import ProfileModal     from "./ProfileModal";
 
 function TierCard({ tier, members, myData, isAdmin, onDraw }) {
   const cd     = useCountdown(tier.next);
@@ -18,53 +19,37 @@ function TierCard({ tier, members, myData, isAdmin, onDraw }) {
 
   return (
     <div style={{ background:"rgba(255,255,255,0.03)", border:`1px solid ${tier.color}22`, borderRadius:14, overflow:"hidden" }}>
-      {/* Color accent top bar */}
       <div style={{ height:2, background:`linear-gradient(90deg,${tier.color},transparent)` }}/>
       <div style={{ padding:"14px 16px" }}>
-        {/* Header row */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:12 }}>
           <div>
             <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:12, color:"rgba(255,255,255,0.38)", letterSpacing:"0.14em", marginBottom:4 }}>{tier.label.toUpperCase()} DRAWING</div>
-            {/* Pool total — prominent */}
             <div style={{ display:"flex", alignItems:"baseline", gap:6 }}>
               <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:32, color:tier.color, letterSpacing:"0.04em", lineHeight:1 }}>{potD}</span>
-              <span style={{ fontSize:12, color:"rgba(255,255,255,0.35)", fontFamily:"'DM Sans',sans-serif" }}>total pool</span>
+              <span style={{ fontSize:12, color:"rgba(255,255,255,0.35)" }}>total pool</span>
             </div>
-            {/* Entry fee — secondary */}
-            <div style={{ display:"flex", alignItems:"center", gap:4, marginTop:4 }}>
-              <span style={{ fontSize:11, color:"rgba(255,255,255,0.3)", fontFamily:"'DM Sans',sans-serif" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:4, marginTop:4, flexWrap:"wrap" }}>
+              <span style={{ fontSize:11, color:"rgba(255,255,255,0.3)" }}>
                 {tier.amount<1?`¢${Math.round(tier.amount*100)}`:`$${tier.amount}`} to enter
               </span>
-              <span style={{ fontSize:11, color:"rgba(255,255,255,0.18)", fontFamily:"'DM Sans',sans-serif" }}>·</span>
-              <span style={{ fontSize:11, color:"rgba(255,255,255,0.3)", fontFamily:"'DM Sans',sans-serif" }}>
-                {paid.length} {paid.length===1?"player":"players"}
-              </span>
-              {odds !== "—" && <>
-                <span style={{ fontSize:11, color:"rgba(255,255,255,0.18)" }}>·</span>
-                <span style={{ fontSize:11, color:tier.color, fontFamily:"'DM Sans',sans-serif", fontWeight:600 }}>
-                  {odds}% odds
-                </span>
-              </>}
+              <span style={{ fontSize:11, color:"rgba(255,255,255,0.18)" }}>·</span>
+              <span style={{ fontSize:11, color:"rgba(255,255,255,0.3)" }}>{paid.length} {paid.length===1?"player":"players"}</span>
+              {odds!=="—"&&<><span style={{ fontSize:11, color:"rgba(255,255,255,0.18)" }}>·</span><span style={{ fontSize:11, color:tier.color, fontWeight:600 }}>{odds}% odds</span></>}
             </div>
           </div>
           {isPaid && (
-            <div style={{ fontSize:11, fontWeight:600, color:"#34d399", background:"rgba(52,211,153,0.1)", border:"1px solid rgba(52,211,153,0.2)", borderRadius:20, padding:"4px 10px", fontFamily:"'DM Sans',sans-serif", flexShrink:0 }}>
-              ✓ You're in
-            </div>
+            <div style={{ fontSize:11, fontWeight:600, color:"#34d399", background:"rgba(52,211,153,0.1)", border:"1px solid rgba(52,211,153,0.2)", borderRadius:20, padding:"4px 10px", flexShrink:0 }}>✓ You're in</div>
           )}
         </div>
-
-        {/* Countdown */}
-        <div style={{ display:"flex", gap:5, marginBottom: isAdmin&&paid.length>0 ? 10 : 0 }}>
+        <div style={{ display:"flex", gap:5, marginBottom:isAdmin&&paid.length>0?10:0 }}>
           {[["d","days"],["h","hrs"],["m","min"],["s","sec"]].map(([k,l])=>(
             <div key={k} style={{ flex:1, textAlign:"center" }}>
               <div style={{ background:"rgba(0,0,0,0.35)", borderRadius:6, padding:"6px 2px", fontFamily:"'DM Mono',monospace", fontSize:18, fontWeight:500, color:"#fff", lineHeight:1 }}>{pad(cd[k])}</div>
-              <div style={{ fontSize:8, color:"rgba(255,255,255,0.22)", marginTop:3, textTransform:"uppercase", fontFamily:"'DM Sans',sans-serif", letterSpacing:"0.06em" }}>{l}</div>
+              <div style={{ fontSize:8, color:"rgba(255,255,255,0.22)", marginTop:3, textTransform:"uppercase", letterSpacing:"0.06em" }}>{l}</div>
             </div>
           ))}
         </div>
-
-        {isAdmin && paid.length>0 && (
+        {isAdmin&&paid.length>0&&(
           <button onClick={()=>onDraw(tier)} style={{ width:"100%", padding:"9px", background:`${tier.color}14`, border:`1px solid ${tier.color}35`, borderRadius:8, color:tier.color, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"'DM Sans',sans-serif" }}>
             Draw {tier.label} winner ⚾
           </button>
@@ -84,6 +69,7 @@ export default function MainApp({ user }) {
   const [pinkyModal, setPinkyModal] = useState(null);
   const [confettiActive, setConf]   = useState(false);
   const [showHomescreen, setShowHS] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const tiers   = getTiers();
   const isAdmin = user.email === ADMIN_EMAIL;
 
@@ -93,7 +79,11 @@ export default function MainApp({ user }) {
       const data = snap.docs.map(d=>({id:d.id,...d.data()}));
       setMembers(data);
       const me = data.find(m=>m.uid===user.uid);
-      if (me) { setMyData(me); if(me.seenHomescreen===false) setShowHS(true); }
+      if (me) {
+        setMyData(me);
+        // Show for any user who hasn't explicitly dismissed it
+        if (me.seenHomescreen !== true) setShowHS(true);
+      }
     });
   },[user.uid]);
 
@@ -159,8 +149,9 @@ export default function MainApp({ user }) {
 
       <Confetti active={confettiActive}/>
       {showHomescreen && <HomescreenPrompt userId={user.uid} onDismiss={()=>setShowHS(false)}/>}
-      {winnerModal && <WinnerModal winner={winnerModal.winner} pot={winnerModal.pot} tier={winnerModal.tier} currentUserId={user.uid} onClose={()=>setWinnerModal(null)}/>}
-      {pinkyModal  && <PinkySwearModal tierLabel={pinkyModal.label} amount={pinkyModal.amount} onClose={()=>setPinkyModal(null)}/>}
+      {showProfile    && <ProfileModal user={user} myData={myData} members={members} onClose={()=>setShowProfile(false)}/>}
+      {winnerModal    && <WinnerModal winner={winnerModal.winner} pot={winnerModal.pot} tier={winnerModal.tier} currentUserId={user.uid} onClose={()=>setWinnerModal(null)}/>}
+      {pinkyModal     && <PinkySwearModal tierLabel={pinkyModal.label} amount={pinkyModal.amount} onClose={()=>setPinkyModal(null)}/>}
 
       {/* HEADER */}
       <div style={{ background:"linear-gradient(160deg,#110828,#0a0a0f)", padding:"18px 20px 20px", position:"relative", overflow:"hidden" }}>
@@ -173,10 +164,13 @@ export default function MainApp({ user }) {
               <div style={{ fontFamily:"'Lora',serif", fontStyle:"italic", fontSize:11, color:"rgba(255,255,255,0.28)", marginTop:1 }}>everybody chips in · one person wins</div>
             </div>
           </div>
-          <button className="btn" onClick={()=>signOut(auth)} style={{ fontSize:11,color:"rgba(255,255,255,0.18)",background:"transparent",padding:0,fontFamily:"inherit" }}>sign out</button>
+          {/* Profile button */}
+          <button className="btn" onClick={()=>setShowProfile(true)} style={{ width:34,height:34,borderRadius:"50%",background:myData?hsl(members.findIndex(m=>m.uid===user.uid)):"rgba(255,255,255,0.1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff",flexShrink:0 }}>
+            {ini(myData?.name||user.displayName||"?")}
+          </button>
         </div>
         {recent && (
-          <div style={{ display:"inline-flex",alignItems:"center",gap:6,background:"rgba(167,139,250,0.06)",border:"1px solid rgba(167,139,250,0.12)",borderRadius:20,padding:"4px 12px",marginTop:12,fontSize:12,color:"rgba(167,139,250,0.65)",fontFamily:"'DM Sans',sans-serif" }}>
+          <div style={{ display:"inline-flex",alignItems:"center",gap:6,background:"rgba(167,139,250,0.06)",border:"1px solid rgba(167,139,250,0.12)",borderRadius:20,padding:"4px 12px",marginTop:12,fontSize:12,color:"rgba(167,139,250,0.65)" }}>
             <span style={{ width:5,height:5,borderRadius:"50%",background:"#a78bfa",display:"inline-block",boxShadow:"0 0 4px #a78bfa" }}/>
             👋 {recent.name} just joined
           </div>
@@ -198,32 +192,30 @@ export default function MainApp({ user }) {
       <div style={{ flex:1,overflowY:"auto",padding:"18px 16px 100px" }}>
 
         {/* HOME */}
-        {tab==="home" && (
+        {tab==="home"&&(
           <div style={{ display:"flex",flexDirection:"column",gap:14,animation:"fade-up 0.3s ease" }}>
 
-            {/* Latest winner */}
-            {latestWinner && (
+            {latestWinner&&(
               <div style={{ background:"rgba(167,139,250,0.06)",border:"1px solid rgba(167,139,250,0.16)",borderRadius:12,padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
                 <div>
                   <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:11,color:"rgba(255,255,255,0.3)",letterSpacing:"0.12em",marginBottom:2 }}>LAST {latestWinner.tierLabel?.toUpperCase()} WINNER</div>
                   <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:18,color:"#fff",letterSpacing:"0.03em" }}>🏆 {latestWinner.winnerName}</div>
-                  {latestWinner.winnerWish && <div style={{ fontFamily:"'Lora',serif",fontStyle:"italic",fontSize:12,color:"rgba(255,255,255,0.38)",marginTop:2 }}>"{latestWinner.winnerWish}"</div>}
+                  {latestWinner.winnerWish&&<div style={{ fontFamily:"'Lora',serif",fontStyle:"italic",fontSize:12,color:"rgba(255,255,255,0.35)",marginTop:2 }}>"{latestWinner.winnerWish}"</div>}
                 </div>
                 <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:26,color:"#a78bfa",letterSpacing:"0.04em" }}>${latestWinner.amount}</div>
               </div>
             )}
 
-            {/* Tiers */}
             <div>
               <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:11,color:"rgba(255,255,255,0.28)",letterSpacing:"0.15em",marginBottom:10 }}>LIVE DRAWINGS</div>
               <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
                 {tiers.map(tier=>{
                   const isPaid=myData?.paid?.[tier.id];
-                  return (
+                  return(
                     <div key={tier.id}>
                       <TierCard tier={tier} members={members} myData={myData} isAdmin={isAdmin} onDraw={runDraw}/>
-                      {!isPaid && (
-                        <button className="btn" onClick={()=>markPaid(tier.id)} style={{ width:"100%",marginTop:6,padding:"12px",background:`${tier.color}0c`,border:`1px solid ${tier.color}28`,borderRadius:10,color:tier.color,fontSize:13,fontWeight:600,fontFamily:"'DM Sans',sans-serif",transition:"all 0.15s" }}>
+                      {!isPaid&&(
+                        <button className="btn" onClick={()=>markPaid(tier.id)} style={{ width:"100%",marginTop:6,padding:"12px",background:`${tier.color}0c`,border:`1px solid ${tier.color}28`,borderRadius:10,color:tier.color,fontSize:13,fontWeight:600,fontFamily:"'DM Sans',sans-serif" }}>
                           I'm in for {tier.label} — {tier.amount<1?`¢${Math.round(tier.amount*100)}`:`$${tier.amount}`} ⚾
                         </button>
                       )}
@@ -233,13 +225,11 @@ export default function MainApp({ user }) {
               </div>
             </div>
 
-            {/* Wish */}
             <div style={{ background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:16 }}>
               <WishInput userId={user.uid} currentWish={myData?.wish}/>
             </div>
 
-            {/* Venmo */}
-            {!myData?.venmoHandle && (
+            {!myData?.venmoHandle&&(
               <div style={{ background:"rgba(167,139,250,0.04)",border:"1px solid rgba(167,139,250,0.14)",borderRadius:14,padding:16 }}>
                 <div style={{ fontSize:13,fontWeight:600,color:"rgba(167,139,250,0.8)",marginBottom:3 }}>Add your Venmo</div>
                 <div style={{ fontSize:12,color:"rgba(255,255,255,0.28)",marginBottom:10,lineHeight:1.5 }}>If you win, this is how you collect. Add it now so you're ready.</div>
@@ -247,19 +237,18 @@ export default function MainApp({ user }) {
               </div>
             )}
 
-            {/* Invite */}
             <div style={{ background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:16 }}>
               <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:15,letterSpacing:"0.04em",marginBottom:5,color:"#f5f0e8" }}>GROW THE BALL ⚾</div>
               <div style={{ fontSize:13,color:"rgba(255,255,255,0.35)",marginBottom:14,lineHeight:1.6 }}>Every friend you bring adds to every pot. Your odds don't change — the winnings do.</div>
               <button className="btn" onClick={copyInvite} style={{ width:"100%",padding:12,background:copied?"rgba(52,211,153,0.09)":"rgba(255,255,255,0.04)",border:copied?"1px solid #34d399":"1px solid rgba(255,255,255,0.08)",color:copied?"#34d399":"rgba(255,255,255,0.5)",borderRadius:10,fontSize:13,fontWeight:600,fontFamily:"'DM Sans',sans-serif" }}>
-                {copied ? "✓ Link copied — send it!" : "Copy invite link"}
+                {copied?"✓ Link copied — send it!":"Copy invite link"}
               </button>
             </div>
           </div>
         )}
 
         {/* WISHES */}
-        {tab==="wishes" && (
+        {tab==="wishes"&&(
           <div style={{ animation:"fade-up 0.3s ease" }}>
             <div style={{ fontFamily:"'Lora',serif",fontStyle:"italic",fontSize:13,color:"rgba(255,255,255,0.3)",marginBottom:16,lineHeight:1.5 }}>
               What everyone's planning to do with the money. Heart the ones that get you.
@@ -269,15 +258,15 @@ export default function MainApp({ user }) {
                 const count=getLikeCount(m.uid),isLiked=myData?.likes?.[m.uid],isTop=i===0&&count>0;
                 const color=hsl(members.findIndex(x=>x.uid===m.uid));
                 const anyPaid=Object.values(m.paid||{}).some(Boolean);
-                return (
+                return(
                   <div key={m.uid} style={{ background:isTop?"rgba(167,139,250,0.05)":"rgba(255,255,255,0.03)",border:isTop?"1px solid rgba(167,139,250,0.2)":"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"14px 16px",opacity:anyPaid?1:0.4 }}>
                     <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:m.wish?10:0 }}>
                       <div style={{ width:38,height:38,borderRadius:"50%",background:color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff",flexShrink:0 }}>{ini(m.name)}</div>
                       <div style={{ flex:1 }}>
                         <div style={{ display:"flex",alignItems:"center",gap:6,flexWrap:"wrap" }}>
                           <span style={{ fontSize:14,fontWeight:600 }}>{m.name}</span>
-                          {m.uid===user.uid && <span style={{ fontSize:10,color:"#a78bfa",background:"rgba(167,139,250,0.1)",borderRadius:4,padding:"1px 6px" }}>you</span>}
-                          {isTop && <span style={{ fontSize:10,background:"rgba(167,139,250,0.1)",color:"#a78bfa",borderRadius:4,padding:"2px 6px",fontWeight:700 }}>crowd favorite ♥</span>}
+                          {m.uid===user.uid&&<span style={{ fontSize:10,color:"#a78bfa",background:"rgba(167,139,250,0.1)",borderRadius:4,padding:"1px 6px" }}>you</span>}
+                          {isTop&&<span style={{ fontSize:10,background:"rgba(167,139,250,0.1)",color:"#a78bfa",borderRadius:4,padding:"2px 6px",fontWeight:700 }}>crowd favorite ♥</span>}
                         </div>
                         <div style={{ fontSize:11,color:"rgba(255,255,255,0.2)" }}>🔥 {m.streak||0}-month streak</div>
                       </div>
@@ -287,8 +276,8 @@ export default function MainApp({ user }) {
                       </button>
                     </div>
                     {m.wish
-                      ? <div style={{ fontSize:14,color:"rgba(255,255,255,0.7)",fontFamily:"'Lora',serif",fontStyle:"italic",lineHeight:1.55,paddingLeft:48 }}>"{m.wish}"</div>
-                      : <div style={{ fontSize:12,color:"rgba(255,255,255,0.16)",fontStyle:"italic",paddingLeft:48,fontFamily:"'Lora',serif" }}>Still thinking…</div>}
+                      ?<div style={{ fontSize:14,color:"rgba(255,255,255,0.7)",fontFamily:"'Lora',serif",fontStyle:"italic",lineHeight:1.55,paddingLeft:48 }}>"{m.wish}"</div>
+                      :<div style={{ fontSize:12,color:"rgba(255,255,255,0.16)",fontStyle:"italic",paddingLeft:48,fontFamily:"'Lora',serif" }}>Still thinking…</div>}
                   </div>
                 );
               })}
@@ -297,10 +286,10 @@ export default function MainApp({ user }) {
         )}
 
         {/* WINNERS */}
-        {tab==="winners" && (
+        {tab==="winners"&&(
           <div style={{ animation:"fade-up 0.3s ease",display:"flex",flexDirection:"column",gap:12 }}>
             <div style={{ fontFamily:"'Lora',serif",fontStyle:"italic",fontSize:13,color:"rgba(255,255,255,0.3)",marginBottom:4 }}>Every dollar that went in came back out. No exceptions.</div>
-            {history.length===0 && (
+            {history.length===0&&(
               <div style={{ textAlign:"center",padding:"60px 0",color:"rgba(255,255,255,0.2)" }}>
                 <Nooball size={52} spin="fast"/>
                 <div style={{ marginTop:16,fontSize:14,fontFamily:"'Lora',serif",fontStyle:"italic" }}>Nobody's won yet. Could be you.</div>
@@ -312,18 +301,18 @@ export default function MainApp({ user }) {
                   <div>
                     <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:11,color:"rgba(255,255,255,0.22)",marginBottom:4,letterSpacing:"0.1em" }}>{h.tierLabel?.toUpperCase()} · {h.month}</div>
                     <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:22,color:"#fff",letterSpacing:"0.03em" }}>🏆 {h.winnerName}</div>
-                    {h.winnerVenmo && <div style={{ fontSize:12,color:"#a78bfa",marginTop:2 }}>@{h.winnerVenmo}</div>}
+                    {h.winnerVenmo&&<div style={{ fontSize:12,color:"#a78bfa",marginTop:2 }}>@{h.winnerVenmo}</div>}
                   </div>
                   <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:30,color:winColors[i%5],letterSpacing:"0.04em" }}>${h.amount}</div>
                 </div>
-                {h.winnerWish && <div style={{ fontSize:13,color:"rgba(255,255,255,0.38)",fontStyle:"italic",fontFamily:"'Lora',serif",borderTop:"1px solid rgba(255,255,255,0.06)",paddingTop:10 }}>"{h.winnerWish}"</div>}
+                {h.winnerWish&&<div style={{ fontSize:13,color:"rgba(255,255,255,0.38)",fontStyle:"italic",fontFamily:"'Lora',serif",borderTop:"1px solid rgba(255,255,255,0.06)",paddingTop:10 }}>"{h.winnerWish}"</div>}
               </div>
             ))}
           </div>
         )}
 
-        {/* HOW IT WORKS */}
-        {tab==="how" && (
+        {/* HOW */}
+        {tab==="how"&&(
           <div style={{ animation:"fade-up 0.3s ease",display:"flex",flexDirection:"column",gap:14 }}>
             <div style={{ marginBottom:8 }}>
               <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:30,color:"#fff",letterSpacing:"0.04em",lineHeight:1.1 }}>OK SO HERE'S THE DEAL.</div>
@@ -331,10 +320,10 @@ export default function MainApp({ user }) {
             </div>
 
             {[
-              { n:"01", t:"You throw in a buck", b:"Pick a drawing — daily for a quarter, weekly for a dollar, monthly for two, yearly for ten. Chip in. You're in the pool." },
-              { n:"02", t:"The pot grows", b:"Every person who joins adds to the pot. More people means a bigger prize — but also more competition. Worth it." },
-              { n:"03", t:"Someone catches the NooBall", b:"When time's up, one person gets randomly selected and walks away with everything in the pool. That person could be you." },
-              { n:"04", t:"It's the honor system", b:"We don't take a cut. There are no fees. The winner posts their Venmo, everyone sends. Simple as that. Don't be the person who doesn't send." },
+              {n:"01",t:"You throw in a buck",b:"Pick a drawing — daily for a quarter, weekly for a dollar, monthly for two, yearly for ten. Chip in. You're in the pool."},
+              {n:"02",t:"The pot grows",b:"Every person who joins adds to it. More people means a bigger prize — but also more competition. Worth it."},
+              {n:"03",t:"Someone catches the NooBall",b:"When time's up, one person gets randomly selected and walks away with everything in the pool. That person could be you."},
+              {n:"04",t:"It's the honor system",b:"We don't take a cut. There are no fees. The winner posts their Venmo, everyone sends. Simple as that. Don't be the person who doesn't send."},
             ].map(s=>(
               <div key={s.n} style={{ background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:18,display:"flex",gap:14,alignItems:"flex-start" }}>
                 <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:14,color:"#a78bfa",opacity:0.45,paddingTop:1,flexShrink:0,letterSpacing:"0.08em" }}>{s.n}</div>
@@ -358,6 +347,19 @@ export default function MainApp({ user }) {
                 There isn't one. We're building this for fun and planning to keep it free. If that changes, we'll tell you first. Promise.
               </div>
             </div>
+
+            {/* Terms */}
+            <div style={{ background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:14,padding:18 }}>
+              <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:15,color:"rgba(255,255,255,0.5)",letterSpacing:"0.06em",marginBottom:6 }}>THE FINE PRINT</div>
+              <div style={{ fontSize:12,color:"rgba(255,255,255,0.3)",lineHeight:1.75 }}>
+                NooBall is a community savings tool for entertainment purposes. Participation is voluntary. Payouts are handled peer-to-peer via Venmo on an honor system — NooBall does not process or hold funds. By using this app you agree to participate in good faith. Your data (name, email, Venmo handle, wishes) is stored securely and never sold. You can delete your account at any time from your profile.
+              </div>
+            </div>
+
+            {/* Profile link */}
+            <button className="btn" onClick={()=>setShowProfile(true)} style={{ width:"100%",padding:12,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,color:"rgba(255,255,255,0.4)",fontSize:13,fontFamily:"'DM Sans',sans-serif",fontWeight:500 }}>
+              Edit profile or delete account →
+            </button>
           </div>
         )}
       </div>
@@ -391,10 +393,10 @@ function VenmoInput({ userId, members }) {
       <div style={{ display:"flex",gap:8 }}>
         <input placeholder="@yourvenmo" value={handle} onChange={e=>{setHandle(e.target.value);setError("");}} style={{ flex:1,padding:"10px 12px",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,color:"#fff",fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none" }}/>
         <button onClick={save} style={{ padding:"10px 16px",background:saved?"rgba(52,211,153,0.12)":"rgba(167,139,250,0.1)",border:saved?"1px solid #34d399":"1px solid rgba(167,139,250,0.22)",borderRadius:10,color:saved?"#34d399":"#a78bfa",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap" }}>
-          {saved ? "✓ Done" : "Save"}
+          {saved?"✓ Done":"Save"}
         </button>
       </div>
-      {error && <div style={{ fontSize:11,color:"#f87171",marginTop:4 }}>{error}</div>}
+      {error&&<div style={{ fontSize:11,color:"#f87171",marginTop:4 }}>{error}</div>}
     </div>
   );
 }
