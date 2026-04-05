@@ -9,13 +9,6 @@ export default function WinnerModal({ winner, pot, tier, onClose, currentUserId 
 
   return (
     <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:24,backdropFilter:"blur(10px)" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;600;700&display=swap');
-        @keyframes winner-pop{0%{transform:scale(0.4) rotate(-8deg);opacity:0}60%{transform:scale(1.06) rotate(1deg)}100%{transform:scale(1) rotate(0);opacity:1}}
-        @keyframes slide-up{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes winner-glow{0%,100%{box-shadow:0 0 30px rgba(167,139,250,0.4)}50%{box-shadow:0 0 60px rgba(167,139,250,0.8)}}
-      `}</style>
-
       <Confetti active={true}/>
 
       <div style={{ background:"#0d0d14",border:"1px solid rgba(167,139,250,0.3)",borderRadius:24,padding:"32px 24px",maxWidth:380,width:"100%",textAlign:"center",position:"relative",overflow:"hidden",animation:"winner-glow 2s ease infinite",fontFamily:"'DM Sans',sans-serif" }}>
@@ -32,7 +25,7 @@ export default function WinnerModal({ winner, pot, tier, onClose, currentUserId 
         {isWinner ? (
           <>
             <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:42,color:"#a78bfa",letterSpacing:"0.04em",lineHeight:1,marginBottom:6,animation:"slide-up 0.4s ease 0.4s both" }}>
-              THAT'S YOU! 🎉
+              THAT'S YOU!
             </div>
             <div style={{ fontFamily:"'Lora',serif",fontStyle:"italic",fontSize:16,color:"rgba(255,255,255,0.6)",marginBottom:16,lineHeight:1.5,animation:"slide-up 0.4s ease 0.45s both" }}>
               You caught the NooBall.<br/>Check your Venmo soon.
@@ -64,8 +57,8 @@ export default function WinnerModal({ winner, pot, tier, onClose, currentUserId 
         </div>
 
         {!isWinner && (
-          <button onClick={()=>setPaid(true)} disabled={paid} style={{ width:"100%",padding:14,borderRadius:12,border:"none",cursor:paid?"default":"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:15,fontWeight:700,background:paid?"rgba(52,211,153,0.15)":"linear-gradient(135deg,#7c3aed,#a855f7)",color:paid?"#34d399":"#fff",border:paid?"1px solid #34d399":"none",transition:"all 0.2s",animation:"slide-up 0.4s ease 0.7s both" }}>
-            {paid ? "✓ Sent — good human 🤙" : `I sent $${tier?.amount} ✓`}
+          <button onClick={()=>setPaid(true)} disabled={paid} style={{ width:"100%",padding:14,borderRadius:12,cursor:paid?"default":"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:15,fontWeight:700,background:paid?"rgba(52,211,153,0.15)":"linear-gradient(135deg,#7c3aed,#a855f7)",color:paid?"#34d399":"#fff",border:paid?"1px solid #34d399":"none",transition:"all 0.2s",animation:"slide-up 0.4s ease 0.7s both" }}>
+            {paid ? "Sent — good human" : `I sent $${tier?.amount}`}
           </button>
         )}
 
