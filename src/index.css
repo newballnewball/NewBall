@@ -3,7 +3,7 @@
 
 /* ── Reset ──────────────────────────────────────────────────────────────────── */
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #0a0a0f; font-family: 'DM Sans', sans-serif; }
+body { background: #0b0f1a; font-family: 'DM Sans', sans-serif; }
 
 /* ── Scrollbar ─────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 0; }
@@ -20,15 +20,15 @@ input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.22); }
 }
 .btn:active { transform: scale(0.96); }
 .btn:focus-visible {
-  outline: 2px solid #a78bfa;
+  outline: 2px solid #fbbf24;
   outline-offset: 2px;
 }
 
 .join-btn { transition: transform 0.15s; }
-.join-btn:hover { transform: translateY(-2px) scale(1.02); }
+.join-btn:hover { transform: translateY(-3px) scale(1.03); }
 .join-btn:active { transform: scale(0.97); }
 .join-btn:focus-visible {
-  outline: 2px solid #a78bfa;
+  outline: 2px solid #fbbf24;
   outline-offset: 2px;
 }
 
@@ -76,13 +76,13 @@ input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.22); }
 }
 
 @keyframes glow {
-  0%, 100% { box-shadow: 0 0 24px rgba(124,58,237,0.35); }
-  50%      { box-shadow: 0 0 40px rgba(124,58,237,0.6); }
+  0%, 100% { box-shadow: 0 0 24px rgba(251,191,36,0.35); }
+  50%      { box-shadow: 0 0 40px rgba(251,191,36,0.6); }
 }
 
 @keyframes btn-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(124,58,237,0.5); }
-  70%      { box-shadow: 0 0 0 14px rgba(124,58,237,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,0.5); }
+  70%      { box-shadow: 0 0 0 16px rgba(251,191,36,0); }
 }
 
 @keyframes bounce {
@@ -109,8 +109,8 @@ input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.22); }
 }
 
 @keyframes winner-glow {
-  0%, 100% { box-shadow: 0 0 30px rgba(167,139,250,0.4); }
-  50%      { box-shadow: 0 0 60px rgba(167,139,250,0.8); }
+  0%, 100% { box-shadow: 0 0 30px rgba(251,191,36,0.4); }
+  50%      { box-shadow: 0 0 60px rgba(251,191,36,0.7); }
 }
 
 @keyframes nb-fall {
@@ -127,16 +127,4 @@ input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.22); }
   0%   { transform: scale(1); }
   40%  { transform: scale(1.07); }
   100% { transform: scale(1); }
-}
-
-/* ── Interactive States ────────────────────────────────────────────────────── */
-.nav-btn {
-  transition: color 0.15s, background 0.15s;
-  border: none;
-  cursor: pointer;
-  background: transparent;
-}
-.nav-btn:hover {
-  background: rgba(167,139,250,0.06);
-  border-radius: 8px;
 }

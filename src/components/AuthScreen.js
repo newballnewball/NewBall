@@ -75,18 +75,18 @@ export default function AuthScreen({ invitedBy, onBack }) {
   });
 
   return (
-    <div style={{ minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#0a0a0f",position:"relative",overflow:"hidden",fontFamily:"'DM Sans',sans-serif" }}>
-      <div style={{ position:"fixed",top:-80,right:-80,width:300,height:300,borderRadius:"50%",background:"radial-gradient(circle,rgba(124,58,237,0.18),transparent 70%)",pointerEvents:"none" }}/>
-      <div style={{ position:"fixed",bottom:-60,left:-60,width:240,height:240,borderRadius:"50%",background:"radial-gradient(circle,rgba(168,85,247,0.12),transparent 70%)",pointerEvents:"none" }}/>
+    <div style={{ minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#0b0f1a",position:"relative",overflow:"hidden",fontFamily:"'DM Sans',sans-serif" }}>
+      <div style={{ position:"fixed",top:-80,right:-80,width:300,height:300,borderRadius:"50%",background:"radial-gradient(circle,rgba(251,191,36,0.15),transparent 70%)",pointerEvents:"none" }}/>
+      <div style={{ position:"fixed",bottom:-60,left:-60,width:240,height:240,borderRadius:"50%",background:"radial-gradient(circle,rgba(249,115,22,0.1),transparent 70%)",pointerEvents:"none" }}/>
 
       <div style={{ width:"100%",maxWidth:360,animation:"fade-up 0.4s ease" }}>
         {onBack && <button onClick={onBack} style={{ background:"transparent",border:"none",color:"rgba(255,255,255,0.3)",cursor:"pointer",fontSize:13,padding:0,marginBottom:20,fontFamily:"inherit" }}>← Back</button>}
 
         <div style={{ textAlign:"center",marginBottom:28 }}>
           <div style={{ marginBottom:14 }}><Nooball size={68} spin="fast"/></div>
-          <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:42,color:"#fff",letterSpacing:"0.06em",lineHeight:1 }}>NOO<span style={{ color:"#a78bfa" }}>BALL</span></div>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:42,color:"#fff",letterSpacing:"0.06em",lineHeight:1 }}>NOO<span style={{ color:"#fbbf24" }}>BALL</span></div>
           <div style={{ fontFamily:"'Lora',serif",fontStyle:"italic",fontSize:13,color:"rgba(255,255,255,0.4)",marginTop:6 }}>everybody chips in · one person wins</div>
-          {invitedBy && <div style={{ marginTop:12,fontSize:13,color:"#a78bfa",background:"rgba(167,139,250,0.1)",border:"1px solid rgba(167,139,250,0.2)",borderRadius:20,padding:"6px 16px",display:"inline-block" }}>You were invited to join</div>}
+          {invitedBy && <div style={{ marginTop:12,fontSize:13,color:"#fbbf24",background:"rgba(251,191,36,0.1)",border:"1px solid rgba(251,191,36,0.2)",borderRadius:20,padding:"6px 16px",display:"inline-block" }}>You were invited to join</div>}
         </div>
 
         {mode !== "reset" && (
@@ -122,10 +122,10 @@ export default function AuthScreen({ invitedBy, onBack }) {
           {success && <div style={{ fontSize:12,color:"#34d399",textAlign:"center",padding:"2px 0" }}>{success}</div>}
 
           {mode==="reset"
-            ? <button onClick={resetPassword} disabled={loading} style={{ width:"100%",padding:14,background:"linear-gradient(135deg,#7c3aed,#a855f7)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit",animation:"glow 3s ease infinite" }}>
+            ? <button onClick={resetPassword} disabled={loading} style={{ width:"100%",padding:14,background:"linear-gradient(135deg,#f59e0b,#fbbf24)",border:"none",borderRadius:12,color:"#451a03",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit",animation:"glow 3s ease infinite" }}>
                 {loading?"Sending...":"Send reset email"}
               </button>
-            : <button onClick={loginEmail} disabled={loading} style={{ width:"100%",padding:14,background:"linear-gradient(135deg,#7c3aed,#a855f7)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit",marginTop:4,animation:"glow 3s ease infinite" }}>
+            : <button onClick={loginEmail} disabled={loading} style={{ width:"100%",padding:14,background:"linear-gradient(135deg,#f59e0b,#fbbf24)",border:"none",borderRadius:12,color:"#451a03",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit",marginTop:4,animation:"glow 3s ease infinite" }}>
                 {loading?"...":(mode==="signup"?"Create account":"Sign in")}
               </button>
           }
@@ -133,11 +133,11 @@ export default function AuthScreen({ invitedBy, onBack }) {
 
         <div style={{ textAlign:"center",marginTop:16,fontSize:13,color:"rgba(255,255,255,0.3)",display:"flex",flexDirection:"column",gap:8 }}>
           {mode==="login" && <>
-            <div>No account? <span onClick={()=>setMode("signup")} style={{ color:"#a78bfa",cursor:"pointer",fontWeight:600 }}>Sign up</span></div>
+            <div>No account? <span onClick={()=>setMode("signup")} style={{ color:"#fbbf24",cursor:"pointer",fontWeight:600 }}>Sign up</span></div>
             <div><span onClick={()=>setMode("reset")} style={{ color:"rgba(255,255,255,0.3)",cursor:"pointer" }}>Forgot password?</span></div>
           </>}
-          {mode==="signup" && <div>Have an account? <span onClick={()=>setMode("login")} style={{ color:"#a78bfa",cursor:"pointer",fontWeight:600 }}>Sign in</span></div>}
-          {mode==="reset" && <div><span onClick={()=>setMode("login")} style={{ color:"#a78bfa",cursor:"pointer",fontWeight:600 }}>← Back to sign in</span></div>}
+          {mode==="signup" && <div>Have an account? <span onClick={()=>setMode("login")} style={{ color:"#fbbf24",cursor:"pointer",fontWeight:600 }}>Sign in</span></div>}
+          {mode==="reset" && <div><span onClick={()=>setMode("login")} style={{ color:"#fbbf24",cursor:"pointer",fontWeight:600 }}>← Back to sign in</span></div>}
         </div>
       </div>
     </div>
