@@ -3,7 +3,7 @@ import { deleteUser, GoogleAuthProvider, signInWithPopup, getAuth, signOut } fro
 import { doc, updateDoc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../firebase";
 
-export default function ProfileModal({ user, myData, members, onClose }) {
+export default function ProfileModal({ user, myData, members, onClose, onShowHomescreen }) {
   const [name, setName]     = useState(myData?.name || "");
   const [venmo, setVenmo]   = useState(myData?.venmoHandle || "");
   const [saved, setSaved]   = useState(false);
@@ -94,6 +94,11 @@ export default function ProfileModal({ user, myData, members, onClose }) {
           <div style={{ fontSize:13,color:"rgba(255,255,255,0.5)" }}>Times played</div>
           <div style={{ fontSize:16,fontWeight:700,color:"#fb923c" }}>{myData?.streak||0}</div>
         </div>
+
+        <button onClick={()=>{ onClose(); onShowHomescreen(); }} style={{ width:"100%",padding:"12px",background:"rgba(167,139,250,0.06)",border:"1px solid rgba(167,139,250,0.15)",borderRadius:12,color:"rgba(167,139,250,0.7)",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+          Add to Home Screen
+        </button>
 
         <button onClick={()=>signOut(getAuth())} style={{ width:"100%",padding:"12px",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,color:"rgba(255,255,255,0.45)",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit",marginBottom:22 }}>
           Sign out
