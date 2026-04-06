@@ -1,88 +1,13 @@
 import { useState, useEffect } from "react";
-import { signOut } from "firebase/auth";
 import { collection, doc, onSnapshot, updateDoc, query, orderBy, addDoc, serverTimestamp, getDocs } from "firebase/firestore";
-import { auth, db, ADMIN_EMAIL, getTiers } from "../firebase";
+import { db, ADMIN_EMAIL, getTier } from "../firebase";
 import { Nooball, useCountdown, pad, hsl, ini, Confetti } from "../App";
 import WinnerModal      from "./WinnerModal";
 import PinkySwearModal  from "./PinkySwearModal";
-import WishInput        from "./WishInput";
 import HomescreenPrompt from "./HomescreenPrompt";
 import ProfileModal     from "./ProfileModal";
 
-// ── SVG Nav Icons ──────────────────────────────────────────────────────────────
-const NavHome = ({ color }) => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-  </svg>
-);
-const NavHeart = ({ color }) => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
-  </svg>
-);
-const NavTrophy = ({ color }) => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 1012 0V2z"/>
-  </svg>
-);
-const NavInfo = ({ color }) => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-  </svg>
-);
-
-function TierCard({ tier, members, myData, isAdmin, onDraw }) {
-  const cd     = useCountdown(tier.next);
-  const paid   = members.filter(m=>m.paid?.[tier.id]);
-  const pot    = (paid.length * tier.amount).toFixed(2);
-  const potD   = parseFloat(pot)%1===0 ? `$${parseInt(pot)}` : `$${pot}`;
-  const odds   = paid.length>0 ? ((1/paid.length)*100).toFixed(1) : null;
-  const isPaid = myData?.paid?.[tier.id];
-
-  return (
-    <div style={{ background:"rgba(255,255,255,0.03)", border:`1px solid ${tier.color}22`, borderRadius:14, overflow:"hidden" }}>
-      <div style={{ height:2, background:`linear-gradient(90deg,${tier.color},transparent)` }}/>
-      <div style={{ padding:"14px 16px" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:12 }}>
-          <div>
-            <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:12, color:"rgba(255,255,255,0.38)", letterSpacing:"0.14em", marginBottom:4 }}>{tier.label.toUpperCase()} DRAWING</div>
-            <div style={{ display:"flex", alignItems:"baseline", gap:6 }}>
-              <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:32, color:tier.color, letterSpacing:"0.04em", lineHeight:1 }}>{potD}</span>
-              <span style={{ fontSize:12, color:"rgba(255,255,255,0.35)" }}>total pool</span>
-            </div>
-            <div style={{ display:"flex", alignItems:"center", gap:4, marginTop:4, flexWrap:"wrap" }}>
-              <span style={{ fontSize:11, color:"rgba(255,255,255,0.3)" }}>
-                {tier.amount<1?`¢${Math.round(tier.amount*100)}`:`$${tier.amount}`} to enter
-              </span>
-              <span style={{ fontSize:11, color:"rgba(255,255,255,0.18)" }}>·</span>
-              <span style={{ fontSize:11, color:"rgba(255,255,255,0.3)" }}>{paid.length} {paid.length===1?"player":"players"}</span>
-              {odds&&<><span style={{ fontSize:11, color:"rgba(255,255,255,0.18)" }}>·</span><span style={{ fontSize:11, color:tier.color, fontWeight:600 }}>{odds}% odds</span></>}
-            </div>
-          </div>
-          {isPaid && (
-            <div style={{ fontSize:11, fontWeight:600, color:"#34d399", background:"rgba(52,211,153,0.1)", border:"1px solid rgba(52,211,153,0.2)", borderRadius:20, padding:"4px 10px", flexShrink:0 }}>You're in</div>
-          )}
-        </div>
-        <div style={{ display:"flex", gap:5, marginBottom:isAdmin&&paid.length>0?10:0 }}>
-          {[["d","days"],["h","hrs"],["m","min"],["s","sec"]].map(([k,l])=>(
-            <div key={k} style={{ flex:1, textAlign:"center" }}>
-              <div style={{ background:"rgba(0,0,0,0.35)", borderRadius:6, padding:"6px 2px", fontFamily:"'DM Mono',monospace", fontSize:18, fontWeight:500, color:"#fff", lineHeight:1 }}>{pad(cd[k])}</div>
-              <div style={{ fontSize:8, color:"rgba(255,255,255,0.22)", marginTop:3, textTransform:"uppercase", letterSpacing:"0.06em" }}>{l}</div>
-            </div>
-          ))}
-        </div>
-        {isAdmin&&paid.length>0&&(
-          <button onClick={()=>onDraw(tier)} style={{ width:"100%", padding:"9px", background:`${tier.color}14`, border:`1px solid ${tier.color}35`, borderRadius:8, color:tier.color, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"'DM Sans',sans-serif" }}>
-            Draw {tier.label} winner
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
 export default function MainApp({ user }) {
-  const [tab, setTab]               = useState("home");
   const [members, setMembers]       = useState([]);
   const [history, setHistory]       = useState([]);
   const [myData, setMyData]         = useState(null);
@@ -92,7 +17,10 @@ export default function MainApp({ user }) {
   const [confettiActive, setConf]   = useState(false);
   const [showHomescreen, setShowHS] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const tiers   = getTiers();
+  const [wish, setWish]             = useState("");
+  const [wishSaved, setWishSaved]   = useState(false);
+  const tier    = getTier();
+  const cd      = useCountdown(tier.next);
   const isAdmin = user.email === ADMIN_EMAIL;
 
   useEffect(()=>{
@@ -103,25 +31,42 @@ export default function MainApp({ user }) {
       const me = data.find(m=>m.uid===user.uid);
       if (me) {
         setMyData(me);
+        if (!wish && me.wish) setWish(me.wish);
         if (me.seenHomescreen !== true) setShowHS(true);
       }
     });
-  },[user.uid]);
+  },[user.uid]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(()=>{
     const q = query(collection(db,"history"),orderBy("drawnAt","desc"));
     return onSnapshot(q,snap=>setHistory(snap.docs.map(d=>({id:d.id,...d.data()}))));
   },[]);
 
-  const markPaid = async tierId => {
-    const tier = tiers.find(t=>t.id===tierId);
-    await updateDoc(doc(db,"users",user.uid),{ paid:{...(myData?.paid||{}),[tierId]:true}, streak:(myData?.streak||0)+1 });
+  const paid   = members.filter(m=>m.paid?.[tier.id]);
+  const pot    = paid.length * tier.amount;
+  const potStr = pot % 1 === 0 ? `$${pot}` : `$${pot.toFixed(2)}`;
+  const isPaid = myData?.paid?.[tier.id];
+
+  const markPaid = async () => {
+    await updateDoc(doc(db,"users",user.uid),{
+      paid:{...(myData?.paid||{}),[tier.id]:true},
+      streak:(myData?.streak||0)+1,
+    });
     setPinkyModal(tier);
+  };
+
+  const saveWish = async () => {
+    if (!wish.trim()) return;
+    await updateDoc(doc(db,"users",user.uid), { wish:wish.trim() });
+    setWishSaved(true);
+    setTimeout(()=>setWishSaved(false), 2000);
   };
 
   const toggleLike = async memberId => {
     if (memberId===user.uid) return;
-    await updateDoc(doc(db,"users",user.uid),{ likes:{...(myData?.likes||{}),[memberId]:!myData?.likes?.[memberId]} });
+    await updateDoc(doc(db,"users",user.uid),{
+      likes:{...(myData?.likes||{}),[memberId]:!myData?.likes?.[memberId]},
+    });
   };
 
   const getLikeCount = uid => members.filter(m=>m.likes?.[uid]).length;
@@ -129,53 +74,41 @@ export default function MainApp({ user }) {
   const copyInvite = async () => {
     try {
       await navigator.clipboard.writeText(`${window.location.origin}?ref=${user.uid}`);
-      setCopied(true);
-      setTimeout(()=>setCopied(false),2500);
     } catch {
-      // Fallback: select text for manual copy
       const ta = document.createElement("textarea");
       ta.value = `${window.location.origin}?ref=${user.uid}`;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-      setCopied(true);
-      setTimeout(()=>setCopied(false),2500);
+      document.body.appendChild(ta); ta.select();
+      document.execCommand("copy"); document.body.removeChild(ta);
     }
+    setCopied(true);
+    setTimeout(()=>setCopied(false),2500);
   };
 
-  const runDraw = async tier => {
-    const paid = members.filter(m=>m.paid?.[tier.id]);
+  const runDraw = async () => {
     if (!paid.length) return;
     const winner = paid[Math.floor(Math.random()*paid.length)];
-    const pot    = (paid.length*tier.amount).toFixed(2);
+    const amount = paid.length * tier.amount;
     await addDoc(collection(db,"history"),{
       winnerId:winner.uid, winnerName:winner.name, winnerWish:winner.wish||"",
-      winnerVenmo:winner.venmoHandle||"", amount:parseFloat(pot),
+      winnerVenmo:winner.venmoHandle||"", amount,
       tierAmount:tier.amount, tierId:tier.id, tierLabel:tier.label,
       members:paid.length, drawnAt:serverTimestamp(),
       month:new Date().toLocaleString("default",{month:"long",year:"numeric"}),
     });
     const all = await getDocs(collection(db,"users"));
-    await Promise.all(all.docs.map(d=>{ const pd={...(d.data().paid||{})}; delete pd[tier.id]; return updateDoc(d.ref,{paid:pd}); }));
+    await Promise.all(all.docs.map(d=>{
+      const pd={...(d.data().paid||{})}; delete pd[tier.id];
+      return updateDoc(d.ref,{paid:pd});
+    }));
     setConf(true); setTimeout(()=>setConf(false),5500);
-    setWinnerModal({winner,pot,tier});
+    setWinnerModal({winner,pot:amount.toFixed(2),tier});
   };
 
-  const recent        = members.filter(m=>m.uid!==user.uid).slice(-1)[0];
   const sortedMembers = [...members].sort((a,b)=>getLikeCount(b.uid)-getLikeCount(a.uid));
-  const winColors     = ["#a78bfa","#f472b6","#60a5fa","#34d399","#fb923c"];
   const latestWinner  = history[0];
 
-  const navItems = [
-    { id:"home",    label:"Home",    Icon:NavHome },
-    { id:"wishes",  label:"Wishes",  Icon:NavHeart },
-    { id:"winners", label:"Winners", Icon:NavTrophy },
-    { id:"how",     label:"How",     Icon:NavInfo },
-  ];
-
   return (
-    <div style={{ fontFamily:"'DM Sans',sans-serif", background:"#0a0a0f", minHeight:"100vh", maxWidth:430, margin:"0 auto", display:"flex", flexDirection:"column", color:"#fff" }}>
+    <div style={{ fontFamily:"'DM Sans',sans-serif", background:"#0a0a0f", minHeight:"100vh", maxWidth:430, margin:"0 auto", color:"#fff" }}>
 
       <Confetti active={confettiActive}/>
       {showHomescreen && <HomescreenPrompt userId={user.uid} onDismiss={()=>setShowHS(false)}/>}
@@ -183,242 +116,181 @@ export default function MainApp({ user }) {
       {winnerModal    && <WinnerModal winner={winnerModal.winner} pot={winnerModal.pot} tier={winnerModal.tier} currentUserId={user.uid} onClose={()=>setWinnerModal(null)}/>}
       {pinkyModal     && <PinkySwearModal tierLabel={pinkyModal.label} amount={pinkyModal.amount} onClose={()=>setPinkyModal(null)}/>}
 
-      {/* HEADER */}
-      <div style={{ background:"linear-gradient(160deg,#110828,#0a0a0f)", padding:"18px 20px 20px", position:"relative", overflow:"hidden" }}>
-        <div style={{ position:"absolute",inset:0,background:"radial-gradient(ellipse at 80% 0%,rgba(124,58,237,0.1),transparent 55%)",pointerEvents:"none" }}/>
-        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",position:"relative" }}>
-          <div style={{ display:"flex",alignItems:"center",gap:12 }}>
-            <Nooball size={34} spin="slow"/>
-            <div>
-              <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:24, letterSpacing:"0.06em", lineHeight:1, color:"#fff" }}>NOO<span style={{ color:"#a78bfa" }}>BALL</span></div>
-              <div style={{ fontFamily:"'Lora',serif", fontStyle:"italic", fontSize:11, color:"rgba(255,255,255,0.28)", marginTop:1 }}>everybody chips in · one person wins</div>
-            </div>
+      {/* ── HERO ─────────────────────────────────────────────── */}
+      <div style={{ background:"linear-gradient(170deg,#110828 0%,#0a0a0f 100%)", padding:"24px 24px 32px", textAlign:"center", position:"relative", overflow:"hidden" }}>
+        <div style={{ position:"absolute",inset:0,background:"radial-gradient(ellipse at 50% 20%,rgba(124,58,237,0.14),transparent 60%)",pointerEvents:"none" }}/>
+
+        {/* Top bar */}
+        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",position:"relative",marginBottom:28 }}>
+          <div style={{ display:"flex",alignItems:"center",gap:10 }}>
+            <Nooball size={30} spin="slow"/>
+            <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:"0.06em", color:"#fff" }}>NOO<span style={{ color:"#a78bfa" }}>BALL</span></span>
           </div>
-          <button className="btn" onClick={()=>setShowProfile(true)} style={{ width:34,height:34,borderRadius:"50%",background:myData?hsl(members.findIndex(m=>m.uid===user.uid)):"rgba(255,255,255,0.1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff",flexShrink:0 }}>
+          <button className="btn" onClick={()=>setShowProfile(true)} style={{ width:32,height:32,borderRadius:"50%",background:myData?hsl(members.findIndex(m=>m.uid===user.uid)):"rgba(255,255,255,0.1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff",flexShrink:0 }}>
             {ini(myData?.name||user.displayName||"?")}
           </button>
         </div>
-        {recent && (
-          <div style={{ display:"inline-flex",alignItems:"center",gap:6,background:"rgba(167,139,250,0.06)",border:"1px solid rgba(167,139,250,0.12)",borderRadius:20,padding:"4px 12px",marginTop:12,fontSize:12,color:"rgba(167,139,250,0.65)" }}>
-            <span style={{ width:5,height:5,borderRadius:"50%",background:"#a78bfa",display:"inline-block",boxShadow:"0 0 4px #a78bfa" }}/>
-            {recent.name} just joined
+
+        {/* The Pot */}
+        <div style={{ position:"relative",animation:"fade-up 0.4s ease" }}>
+          <div style={{ marginBottom:12 }}><Nooball size={64} spin="medium"/></div>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:72, background:"linear-gradient(135deg,#a78bfa,#f472b6)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text", letterSpacing:"0.04em", lineHeight:1, marginBottom:4 }}>
+            {potStr}
           </div>
-        )}
+          <div style={{ fontSize:14, color:"rgba(255,255,255,0.4)", marginBottom:16 }}>
+            in the pot
+          </div>
+
+          {/* Countdown */}
+          <div style={{ display:"flex", justifyContent:"center", gap:8, marginBottom:6 }}>
+            {[["d","days"],["h","hrs"],["m","min"],["s","sec"]].map(([k,l])=>(
+              <div key={k} style={{ textAlign:"center" }}>
+                <div style={{ background:"rgba(255,255,255,0.06)", borderRadius:8, padding:"8px 12px", fontFamily:"'DM Mono',monospace", fontSize:22, fontWeight:500, color:"#fff", lineHeight:1, minWidth:44 }}>{pad(cd[k])}</div>
+                <div style={{ fontSize:9, color:"rgba(255,255,255,0.25)", marginTop:4, textTransform:"uppercase", letterSpacing:"0.08em" }}>{l}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize:13, color:"rgba(255,255,255,0.3)", marginBottom:24 }}>
+            {paid.length} {paid.length===1?"person":"people"} playing
+          </div>
+
+          {/* THE BUTTON */}
+          {isPaid ? (
+            <div style={{ display:"inline-flex",alignItems:"center",gap:8,background:"rgba(52,211,153,0.1)",border:"1px solid rgba(52,211,153,0.25)",borderRadius:16,padding:"14px 32px",fontSize:16,fontWeight:700,color:"#34d399" }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              You're in this week
+            </div>
+          ) : (
+            <button className="join-btn" onClick={markPaid} style={{ background:"linear-gradient(135deg,#7c3aed,#a855f7)", border:"none", borderRadius:18, color:"#fff", fontSize:24, padding:"20px 64px", cursor:"pointer", fontFamily:"'Bebas Neue',sans-serif", letterSpacing:"0.1em", animation:"btn-pulse 2.5s ease infinite", boxShadow:"0 4px 30px rgba(124,58,237,0.4)" }}>
+              I'M IN — $1
+            </button>
+          )}
+
+          {/* Admin draw button */}
+          {isAdmin && paid.length > 0 && (
+            <button onClick={runDraw} style={{ display:"block", margin:"16px auto 0", padding:"10px 24px", background:"rgba(167,139,250,0.1)", border:"1px solid rgba(167,139,250,0.3)", borderRadius:10, color:"#a78bfa", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"'DM Sans',sans-serif" }}>
+              Draw this week's winner
+            </button>
+          )}
+        </div>
       </div>
 
-      <div style={{ height:1,background:"linear-gradient(90deg,transparent,rgba(167,139,250,0.15),transparent)" }}/>
+      {/* ── HOW IT WORKS — inline, 3 sentences ───────────── */}
+      <div style={{ padding:"20px 24px", textAlign:"center", borderBottom:"1px solid rgba(255,255,255,0.05)" }}>
+        <div style={{ fontSize:14, color:"rgba(255,255,255,0.4)", lineHeight:1.7 }}>
+          Everyone chips in <strong style={{ color:"rgba(255,255,255,0.65)" }}>$1 a week</strong>.
+          One random person <strong style={{ color:"rgba(255,255,255,0.65)" }}>wins the whole pot</strong>.
+          Losers Venmo the winner. <strong style={{ color:"rgba(255,255,255,0.65)" }}>Honor system</strong> — no fees, no catch.
+        </div>
+      </div>
 
-      {/* CONTENT */}
-      <div style={{ flex:1,overflowY:"auto",padding:"18px 16px 100px" }}>
-
-        {/* HOME */}
-        {tab==="home"&&(
-          <div style={{ display:"flex",flexDirection:"column",gap:14,animation:"fade-up-short 0.3s ease" }}>
-
-            {latestWinner&&(
-              <div style={{ background:"rgba(167,139,250,0.06)",border:"1px solid rgba(167,139,250,0.16)",borderRadius:12,padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
-                <div>
-                  <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:11,color:"rgba(255,255,255,0.3)",letterSpacing:"0.12em",marginBottom:2 }}>LAST {latestWinner.tierLabel?.toUpperCase()} WINNER</div>
-                  <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:18,color:"#fff",letterSpacing:"0.03em" }}>{latestWinner.winnerName}</div>
-                  {latestWinner.winnerWish&&<div style={{ fontFamily:"'Lora',serif",fontStyle:"italic",fontSize:12,color:"rgba(255,255,255,0.35)",marginTop:2 }}>"{latestWinner.winnerWish}"</div>}
-                </div>
-                <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:26,color:"#a78bfa",letterSpacing:"0.04em" }}>${latestWinner.amount}</div>
-              </div>
-            )}
-
+      {/* ── LAST WINNER ──────────────────────────────────── */}
+      {latestWinner && (
+        <div style={{ padding:"16px 24px", borderBottom:"1px solid rgba(255,255,255,0.05)" }}>
+          <div style={{ background:"rgba(167,139,250,0.06)", border:"1px solid rgba(167,139,250,0.14)", borderRadius:14, padding:"14px 18px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
             <div>
-              <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:11,color:"rgba(255,255,255,0.28)",letterSpacing:"0.15em",marginBottom:10 }}>LIVE DRAWINGS</div>
-              <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
-                {tiers.map(tier=>{
-                  const isPaid=myData?.paid?.[tier.id];
-                  return(
-                    <div key={tier.id}>
-                      <TierCard tier={tier} members={members} myData={myData} isAdmin={isAdmin} onDraw={runDraw}/>
-                      {!isPaid&&(
-                        <button className="btn" onClick={()=>markPaid(tier.id)} style={{ width:"100%",marginTop:6,padding:"12px",background:`${tier.color}0c`,border:`1px solid ${tier.color}28`,borderRadius:10,color:tier.color,fontSize:13,fontWeight:600,fontFamily:"'DM Sans',sans-serif" }}>
-                          I'm in for {tier.label} — {tier.amount<1?`¢${Math.round(tier.amount*100)}`:`$${tier.amount}`}
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
+              <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:10, color:"rgba(255,255,255,0.3)", letterSpacing:"0.14em", marginBottom:3 }}>LAST WINNER</div>
+              <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, color:"#fff", letterSpacing:"0.03em" }}>{latestWinner.winnerName}</div>
+              {latestWinner.winnerWish && <div style={{ fontFamily:"'Lora',serif", fontStyle:"italic", fontSize:12, color:"rgba(255,255,255,0.35)", marginTop:2 }}>"{latestWinner.winnerWish}"</div>}
+            </div>
+            <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:"#a78bfa", letterSpacing:"0.04em" }}>${latestWinner.amount}</div>
+          </div>
+        </div>
+      )}
+
+      {/* ── WISH WALL ────────────────────────────────────── */}
+      <div style={{ padding:"20px 24px 40px" }}>
+        <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:13, color:"rgba(255,255,255,0.28)", letterSpacing:"0.15em", marginBottom:14 }}>
+          WHAT PEOPLE WANT
+        </div>
+
+        <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
+          {/* Your wish — always first */}
+          <div style={{ background:"rgba(167,139,250,0.06)", border:"1px solid rgba(167,139,250,0.18)", borderRadius:14, padding:"14px 16px" }}>
+            <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:10 }}>
+              <div style={{ width:36,height:36,borderRadius:"50%",background:myData?hsl(members.findIndex(m=>m.uid===user.uid)):"#a78bfa",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff",flexShrink:0 }}>
+                {ini(myData?.name||user.displayName||"?")}
+              </div>
+              <div style={{ flex:1 }}>
+                <div style={{ display:"flex",alignItems:"center",gap:6 }}>
+                  <span style={{ fontSize:14,fontWeight:600 }}>{myData?.name || user.displayName || "You"}</span>
+                  <span style={{ fontSize:10,color:"#a78bfa",background:"rgba(167,139,250,0.1)",borderRadius:4,padding:"1px 6px" }}>you</span>
+                </div>
               </div>
             </div>
-
-            <div style={{ background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:16 }}>
-              <WishInput userId={user.uid} currentWish={myData?.wish}/>
-            </div>
-
-            {!myData?.venmoHandle&&(
-              <div style={{ background:"rgba(167,139,250,0.04)",border:"1px solid rgba(167,139,250,0.14)",borderRadius:14,padding:16 }}>
-                <div style={{ fontSize:13,fontWeight:600,color:"rgba(167,139,250,0.8)",marginBottom:3 }}>Add your Venmo</div>
-                <div style={{ fontSize:12,color:"rgba(255,255,255,0.28)",marginBottom:10,lineHeight:1.5 }}>If you win, this is how you collect. Add it now so you're ready.</div>
-                <VenmoInput userId={user.uid} members={members}/>
-              </div>
-            )}
-
-            <div style={{ background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:16 }}>
-              <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:15,letterSpacing:"0.04em",marginBottom:5,color:"#f5f0e8" }}>GROW THE BALL</div>
-              <div style={{ fontSize:13,color:"rgba(255,255,255,0.35)",marginBottom:14,lineHeight:1.6 }}>Every friend you bring adds to every pot. Your odds don't change — the winnings do.</div>
-              <button className="btn" onClick={copyInvite} style={{ width:"100%",padding:12,background:copied?"rgba(52,211,153,0.09)":"rgba(255,255,255,0.04)",border:copied?"1px solid #34d399":"1px solid rgba(255,255,255,0.08)",color:copied?"#34d399":"rgba(255,255,255,0.5)",borderRadius:10,fontSize:13,fontWeight:600,fontFamily:"'DM Sans',sans-serif" }}>
-                {copied?"Link copied — send it!":"Copy invite link"}
+            <div style={{ display:"flex",gap:8 }}>
+              <input
+                placeholder="What would you do with the money?"
+                value={wish}
+                onChange={e=>{setWish(e.target.value);setWishSaved(false);}}
+                onKeyDown={e=>e.key==="Enter"&&saveWish()}
+                style={{ flex:1,padding:"10px 12px",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,color:"#fff",fontSize:13,fontFamily:"'Lora',serif",fontStyle:"italic",outline:"none" }}
+              />
+              <button onClick={saveWish} disabled={!wish.trim()} style={{ padding:"10px 16px",background:wishSaved?"rgba(52,211,153,0.12)":"rgba(167,139,250,0.12)",border:wishSaved?"1px solid #34d399":"1px solid rgba(167,139,250,0.25)",borderRadius:10,color:wishSaved?"#34d399":"#a78bfa",fontSize:12,fontWeight:600,cursor:wish.trim()?"pointer":"default",fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap",animation:wishSaved?"saved-pop 0.3s ease":"none" }}>
+                {wishSaved ? "Saved" : "Save"}
               </button>
             </div>
           </div>
-        )}
 
-        {/* WISHES */}
-        {tab==="wishes"&&(
-          <div style={{ animation:"fade-up-short 0.3s ease" }}>
-            <div style={{ fontFamily:"'Lora',serif",fontStyle:"italic",fontSize:13,color:"rgba(255,255,255,0.3)",marginBottom:16,lineHeight:1.5 }}>
-              What everyone's planning to do with the money. Heart the ones that get you.
-            </div>
-            <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
-              {sortedMembers.map((m,i)=>{
-                const count=getLikeCount(m.uid),isLiked=myData?.likes?.[m.uid],isTop=i===0&&count>0;
-                const color=hsl(members.findIndex(x=>x.uid===m.uid));
-                const anyPaid=Object.values(m.paid||{}).some(Boolean);
-                return(
-                  <div key={m.uid} style={{ background:isTop?"rgba(167,139,250,0.05)":"rgba(255,255,255,0.03)",border:isTop?"1px solid rgba(167,139,250,0.2)":"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"14px 16px",opacity:anyPaid?1:0.4 }}>
-                    <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:m.wish?10:0 }}>
-                      <div style={{ width:38,height:38,borderRadius:"50%",background:color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff",flexShrink:0 }}>{ini(m.name)}</div>
-                      <div style={{ flex:1 }}>
-                        <div style={{ display:"flex",alignItems:"center",gap:6,flexWrap:"wrap" }}>
-                          <span style={{ fontSize:14,fontWeight:600 }}>{m.name}</span>
-                          {m.uid===user.uid&&<span style={{ fontSize:10,color:"#a78bfa",background:"rgba(167,139,250,0.1)",borderRadius:4,padding:"1px 6px" }}>you</span>}
-                          {isTop&&<span style={{ fontSize:10,background:"rgba(167,139,250,0.1)",color:"#a78bfa",borderRadius:4,padding:"2px 6px",fontWeight:700 }}>crowd favorite</span>}
-                        </div>
-                        <div style={{ fontSize:11,color:"rgba(255,255,255,0.2)" }}>{m.streak||0} times played</div>
-                      </div>
-                      <button className="btn" onClick={()=>toggleLike(m.uid)} style={{ display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:8,borderRadius:8,background:isLiked?"rgba(244,114,182,0.1)":"rgba(255,255,255,0.03)",border:isLiked?"1px solid rgba(244,114,182,0.3)":"1px solid rgba(255,255,255,0.06)",cursor:m.uid===user.uid?"default":"pointer" }}>
-                        <span style={{ fontSize:18,lineHeight:1,filter:isLiked?"none":"grayscale(1) opacity(0.3)" }}>♥</span>
-                        <span style={{ fontSize:10,fontWeight:600,color:isLiked?"#f472b6":"rgba(255,255,255,0.22)" }}>{count}</span>
-                      </button>
-                    </div>
+          {/* Everyone else's wishes */}
+          {sortedMembers.filter(m=>m.uid!==user.uid).map(m=>{
+            const count=getLikeCount(m.uid);
+            const isLiked=myData?.likes?.[m.uid];
+            const color=hsl(members.findIndex(x=>x.uid===m.uid));
+            return(
+              <div key={m.uid} style={{ background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"14px 16px" }}>
+                <div style={{ display:"flex",alignItems:"center",gap:10 }}>
+                  <div style={{ width:36,height:36,borderRadius:"50%",background:color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff",flexShrink:0 }}>{ini(m.name)}</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:14,fontWeight:600,marginBottom:2 }}>{m.name}</div>
                     {m.wish
-                      ?<div style={{ fontSize:14,color:"rgba(255,255,255,0.7)",fontFamily:"'Lora',serif",fontStyle:"italic",lineHeight:1.55,paddingLeft:48 }}>"{m.wish}"</div>
-                      :<div style={{ fontSize:12,color:"rgba(255,255,255,0.16)",fontStyle:"italic",paddingLeft:48,fontFamily:"'Lora',serif" }}>Still thinking...</div>}
+                      ? <div style={{ fontSize:13,color:"rgba(255,255,255,0.6)",fontFamily:"'Lora',serif",fontStyle:"italic",lineHeight:1.5 }}>"{m.wish}"</div>
+                      : <div style={{ fontSize:12,color:"rgba(255,255,255,0.2)",fontStyle:"italic",fontFamily:"'Lora',serif" }}>Still thinking...</div>
+                    }
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* WINNERS */}
-        {tab==="winners"&&(
-          <div style={{ animation:"fade-up-short 0.3s ease",display:"flex",flexDirection:"column",gap:12 }}>
-            <div style={{ fontFamily:"'Lora',serif",fontStyle:"italic",fontSize:13,color:"rgba(255,255,255,0.3)",marginBottom:4 }}>Every dollar that went in came back out. No exceptions.</div>
-            {history.length===0&&(
-              <div style={{ textAlign:"center",padding:"60px 0",color:"rgba(255,255,255,0.2)" }}>
-                <Nooball size={52} spin="fast"/>
-                <div style={{ marginTop:16,fontSize:14,fontFamily:"'Lora',serif",fontStyle:"italic" }}>Nobody's won yet. Could be you.</div>
+                  <button className="btn" onClick={()=>toggleLike(m.uid)} style={{ display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:8,borderRadius:8,background:isLiked?"rgba(244,114,182,0.1)":"rgba(255,255,255,0.03)",border:isLiked?"1px solid rgba(244,114,182,0.3)":"1px solid rgba(255,255,255,0.06)",cursor:"pointer",flexShrink:0 }}>
+                    <span style={{ fontSize:16,lineHeight:1,filter:isLiked?"none":"grayscale(1) opacity(0.3)" }}>&#9829;</span>
+                    <span style={{ fontSize:10,fontWeight:600,color:isLiked?"#f472b6":"rgba(255,255,255,0.22)" }}>{count}</span>
+                  </button>
+                </div>
               </div>
-            )}
-            {history.map((h,i)=>(
-              <div key={h.id} style={{ background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:18,borderLeft:`3px solid ${winColors[i%5]}` }}>
-                <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10 }}>
+            );
+          })}
+        </div>
+
+        {/* ── INVITE ─────────────────────────────────────── */}
+        <div style={{ marginTop:24, textAlign:"center" }}>
+          <div style={{ fontSize:13, color:"rgba(255,255,255,0.3)", marginBottom:10 }}>More people = bigger pot</div>
+          <button className="btn" onClick={copyInvite} style={{ padding:"12px 28px",background:copied?"rgba(52,211,153,0.09)":"rgba(255,255,255,0.04)",border:copied?"1px solid #34d399":"1px solid rgba(255,255,255,0.08)",color:copied?"#34d399":"rgba(255,255,255,0.5)",borderRadius:10,fontSize:13,fontWeight:600,fontFamily:"'DM Sans',sans-serif" }}>
+            {copied ? "Link copied!" : "Copy invite link"}
+          </button>
+        </div>
+
+        {/* ── PAST WINNERS ───────────────────────────────── */}
+        {history.length > 1 && (
+          <div style={{ marginTop:28 }}>
+            <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:13, color:"rgba(255,255,255,0.28)", letterSpacing:"0.15em", marginBottom:12 }}>PAST WINNERS</div>
+            <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
+              {history.slice(1).map((h,i)=>(
+                <div key={h.id} style={{ background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
                   <div>
-                    <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:11,color:"rgba(255,255,255,0.22)",marginBottom:4,letterSpacing:"0.1em" }}>{h.tierLabel?.toUpperCase()} · {h.month}</div>
-                    <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:22,color:"#fff",letterSpacing:"0.03em" }}>{h.winnerName}</div>
-                    {h.winnerVenmo&&<div style={{ fontSize:12,color:"#a78bfa",marginTop:2 }}>@{h.winnerVenmo}</div>}
+                    <div style={{ fontSize:16,fontWeight:600 }}>{h.winnerName}</div>
+                    <div style={{ fontSize:11,color:"rgba(255,255,255,0.25)" }}>{h.month}</div>
                   </div>
-                  <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:30,color:winColors[i%5],letterSpacing:"0.04em" }}>${h.amount}</div>
+                  <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:22,color:"#a78bfa" }}>${h.amount}</div>
                 </div>
-                {h.winnerWish&&<div style={{ fontSize:13,color:"rgba(255,255,255,0.38)",fontStyle:"italic",fontFamily:"'Lora',serif",borderTop:"1px solid rgba(255,255,255,0.06)",paddingTop:10 }}>"{h.winnerWish}"</div>}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
-        {/* HOW */}
-        {tab==="how"&&(
-          <div style={{ animation:"fade-up-short 0.3s ease",display:"flex",flexDirection:"column",gap:14 }}>
-            <div style={{ marginBottom:8 }}>
-              <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:30,color:"#fff",letterSpacing:"0.04em",lineHeight:1.1 }}>OK SO HERE'S THE DEAL.</div>
-              <div style={{ fontFamily:"'Lora',serif",fontStyle:"italic",fontSize:15,color:"rgba(255,255,255,0.4)",marginTop:6,lineHeight:1.5 }}>It's stupidly simple. That's the point.</div>
-            </div>
-
-            {[
-              {n:"01",t:"You throw in a buck",b:"Pick a drawing — daily for a quarter, weekly for a dollar, monthly for two, yearly for ten. Chip in. You're in the pool."},
-              {n:"02",t:"The pot grows",b:"Every person who joins adds to it. More people means a bigger prize — but also more competition. Worth it."},
-              {n:"03",t:"Someone catches the NooBall",b:"When time's up, one person gets randomly selected and walks away with everything in the pool. That person could be you."},
-              {n:"04",t:"It's the honor system",b:"We don't take a cut. There are no fees. The winner posts their Venmo, everyone sends. Simple as that. Don't be the person who doesn't send."},
-            ].map(s=>(
-              <div key={s.n} style={{ background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:18,display:"flex",gap:14,alignItems:"flex-start" }}>
-                <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:14,color:"#a78bfa",opacity:0.45,paddingTop:1,flexShrink:0,letterSpacing:"0.08em" }}>{s.n}</div>
-                <div>
-                  <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:17,color:"#fff",letterSpacing:"0.04em",marginBottom:5 }}>{s.t.toUpperCase()}</div>
-                  <div style={{ fontSize:13,color:"rgba(255,255,255,0.42)",lineHeight:1.65 }}>{s.b}</div>
-                </div>
-              </div>
-            ))}
-
-            <div style={{ background:"rgba(167,139,250,0.05)",border:"1px solid rgba(167,139,250,0.14)",borderRadius:14,padding:18 }}>
-              <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:15,color:"#a78bfa",letterSpacing:"0.06em",marginBottom:6 }}>WAIT, IS THIS LEGAL?</div>
-              <div style={{ fontSize:13,color:"rgba(255,255,255,0.4)",lineHeight:1.7 }}>
-                Yeah. NooBall is modeled after something called a ROSCA — a Rotating Savings and Credit Association. Basically the oldest community money game in the world. No house. No cut. Every dollar that comes in goes right back out to a member.
-              </div>
-            </div>
-
-            <div style={{ background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:18 }}>
-              <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:15,color:"rgba(255,255,255,0.7)",letterSpacing:"0.06em",marginBottom:6 }}>WHAT'S THE CATCH?</div>
-              <div style={{ fontSize:13,color:"rgba(255,255,255,0.4)",lineHeight:1.7 }}>
-                There isn't one. We're building this for fun and planning to keep it free. If that changes, we'll tell you first. Promise.
-              </div>
-            </div>
-
-            <div style={{ background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:14,padding:18 }}>
-              <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:15,color:"rgba(255,255,255,0.5)",letterSpacing:"0.06em",marginBottom:6 }}>THE FINE PRINT</div>
-              <div style={{ fontSize:12,color:"rgba(255,255,255,0.3)",lineHeight:1.75 }}>
-                NooBall is a community savings tool for entertainment purposes. Participation is voluntary. Payouts are handled peer-to-peer via Venmo on an honor system — NooBall does not process or hold funds. By using this app you agree to participate in good faith. Your data (name, email, Venmo handle, wishes) is stored securely and never sold. You can delete your account at any time from your profile.
-              </div>
-            </div>
-
-            <button className="btn" onClick={()=>setShowProfile(true)} style={{ width:"100%",padding:12,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,color:"rgba(255,255,255,0.4)",fontSize:13,fontFamily:"'DM Sans',sans-serif",fontWeight:500 }}>
-              Edit profile or delete account
-            </button>
-          </div>
-        )}
+        {/* ── FINE PRINT ─────────────────────────────────── */}
+        <div style={{ marginTop:32, fontSize:11, color:"rgba(255,255,255,0.18)", lineHeight:1.7, textAlign:"center" }}>
+          NooBall is a community savings pool (ROSCA). No house cut, no fees.
+          Payouts are peer-to-peer via Venmo on an honor system.
+          You can delete your account anytime from your profile.
+        </div>
       </div>
-
-      {/* BOTTOM NAV */}
-      <div style={{ position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"rgba(10,10,15,0.97)",backdropFilter:"blur(14px)",borderTop:"1px solid rgba(167,139,250,0.09)",display:"flex",padding:"8px 0 18px",zIndex:100 }}>
-        {navItems.map(n=>{
-          const active = tab===n.id;
-          const color = active?"#a78bfa":"rgba(255,255,255,0.22)";
-          return (
-            <button key={n.id} className="nav-btn" onClick={()=>setTab(n.id)} style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"6px 0",color }}>
-              <n.Icon color={color}/>
-              <span style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:10,letterSpacing:"0.1em" }}>{n.label.toUpperCase()}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function VenmoInput({ userId, members }) {
-  const [handle, setHandle] = useState("");
-  const [saved, setSaved]   = useState(false);
-  const [error, setError]   = useState("");
-  const save = async () => {
-    const clean = handle.replace("@","").toLowerCase().trim();
-    if (!clean) return;
-    if (members.filter(m=>m.uid!==userId&&m.venmoHandle===clean).length>0) { setError("That handle's already taken."); return; }
-    await updateDoc(doc(db,"users",userId),{venmoHandle:clean});
-    setSaved(true);
-  };
-  return (
-    <div>
-      <div style={{ display:"flex",gap:8 }}>
-        <input placeholder="@yourvenmo" value={handle} onChange={e=>{setHandle(e.target.value);setError("");}} style={{ flex:1,padding:"10px 12px",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,color:"#fff",fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none" }}/>
-        <button onClick={save} style={{ padding:"10px 16px",background:saved?"rgba(52,211,153,0.12)":"rgba(167,139,250,0.1)",border:saved?"1px solid #34d399":"1px solid rgba(167,139,250,0.22)",borderRadius:10,color:saved?"#34d399":"#a78bfa",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap" }}>
-          {saved?"Done":"Save"}
-        </button>
-      </div>
-      {error&&<div style={{ fontSize:11,color:"#f87171",marginTop:4 }}>{error}</div>}
     </div>
   );
 }

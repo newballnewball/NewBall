@@ -17,13 +17,6 @@ export const db   = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 export const ADMIN_EMAIL = "emaildavedavis@gmail.com";
 
-// Next midnight tonight
-function nextMidnight() {
-  const d = new Date();
-  d.setHours(24, 0, 0, 0); // rolls to next day at 00:00:00
-  return d.toISOString();
-}
-
 // Next Sunday midnight
 function nextSundayMidnight() {
   const d = new Date();
@@ -33,30 +26,14 @@ function nextSundayMidnight() {
   return d.toISOString();
 }
 
-// First day of next month midnight
-function nextMonthMidnight() {
-  const d = new Date();
-  d.setMonth(d.getMonth() + 1, 1);
-  d.setHours(0, 0, 0, 0);
-  return d.toISOString();
+// One pool. One dollar. One winner.
+export function getTier() {
+  return { id:"weekly", label:"Weekly", amount:1.00, color:"#a78bfa", next:nextSundayMidnight() };
 }
 
-// Jan 1 next year midnight
-function nextYearMidnight() {
-  const d = new Date();
-  d.setFullYear(d.getFullYear() + 1, 0, 1);
-  d.setHours(0, 0, 0, 0);
-  return d.toISOString();
-}
-
-// Always fresh — called at render time
+// Backward compat for history display
 export function getTiers() {
-  return [
-    { id:"daily",   label:"Daily",   amount:0.25, color:"#a78bfa", next:nextMidnight()       },
-    { id:"weekly",  label:"Weekly",  amount:1.00, color:"#c084fc", next:nextSundayMidnight()  },
-    { id:"monthly", label:"Monthly", amount:2.00, color:"#f472b6", next:nextMonthMidnight()   },
-    { id:"yearly",  label:"Yearly",  amount:10.00,color:"#fb923c", next:nextYearMidnight()    },
-  ];
+  return [getTier()];
 }
 
 export const HONOR_LINES = [
@@ -68,19 +45,19 @@ export const HONOR_LINES = [
 ];
 
 export const PINKY_LINES = [
-  "That's a digital pinky swear. We're holding you to it. 🤙",
-  "You just shook hands with the whole pool. Welcome in. 🤝",
-  "Consider this your official NooBall oath. No take-backs. ⚾",
-  "The pool felt that. You're locked in. Let's go. 🎉",
+  "That's a digital pinky swear. We're holding you to it.",
+  "You just shook hands with the whole pool. Welcome in.",
+  "Consider this your official NooBall oath. No take-backs.",
+  "The pool felt that. You're locked in. Let's go.",
 ];
 
 export const SAMPLE_WISHES = [
-  { name:"Marcus T.", wish:"Finally buy that guitar I've been eyeing for 3 years 🎸" },
-  { name:"Sofia M.",  wish:"A really nice candle and a slow Sunday morning 🕯️" },
-  { name:"Reuben F.", wish:"New running shoes — mine are held together by hope 🏃" },
-  { name:"Tyler H.",  wish:"Date night — dinner and a movie, no budget stress 🎬" },
-  { name:"Layla R.",  wish:"Taco Tuesday for the whole office — my treat 🌮" },
-  { name:"Priya K.",  wish:"Start my balcony herb garden 🌱" },
-  { name:"Devon S.",  wish:"A stack of books I've had on my list forever 📚" },
-  { name:"Nadia B.",  wish:"A fancy pour-over coffee setup ☕" },
+  { name:"Marcus T.", wish:"Finally buy that guitar I've been eyeing for 3 years" },
+  { name:"Sofia M.",  wish:"A really nice candle and a slow Sunday morning" },
+  { name:"Reuben F.", wish:"New running shoes — mine are held together by hope" },
+  { name:"Tyler H.",  wish:"Date night — dinner and a movie, no budget stress" },
+  { name:"Layla R.",  wish:"Taco Tuesday for the whole office — my treat" },
+  { name:"Priya K.",  wish:"Start my balcony herb garden" },
+  { name:"Devon S.",  wish:"A stack of books I've had on my list forever" },
+  { name:"Nadia B.",  wish:"A fancy pour-over coffee setup" },
 ];
