@@ -179,7 +179,7 @@ export default function MainApp({ user }) {
 
       <Confetti active={confettiActive}/>
       {showHomescreen && <HomescreenPrompt userId={user.uid} onDismiss={()=>setShowHS(false)}/>}
-      {showProfile    && <ProfileModal user={user} myData={myData} members={members} onClose={()=>setShowProfile(false)}/>}
+      {showProfile    && <ProfileModal user={user} myData={myData} members={members} onClose={()=>setShowProfile(false)} onShowHomescreen={()=>setShowHS(true)}/>}
       {winnerModal    && <WinnerModal winner={winnerModal.winner} pot={winnerModal.pot} tier={winnerModal.tier} currentUserId={user.uid} onClose={()=>setWinnerModal(null)}/>}
       {pinkyModal     && <PinkySwearModal tierLabel={pinkyModal.label} amount={pinkyModal.amount} onClose={()=>setPinkyModal(null)}/>}
 
